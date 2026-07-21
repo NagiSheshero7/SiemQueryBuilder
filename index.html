@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SIEM Query Builder — QRadar · Splunk · RSA NetWitness</title>
+<style>
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface2: #eef1f5;
+  --border: #d5dae0;
+  --text: #1a1d23;
+  --text2: #5a5f6b;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --danger: #dc2626;
+  --success: #059669;
+  --warn: #d97706;
+  --tag-bg: #dbeafe;
+  --tag-text: #1e40af;
+  --code-bg: #1e1e2e;
+  --code-text: #cdd6f4;
+  --code-border: #313244;
+  --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --radius: 10px;
+  --transition: 0.2s ease;
+}
+
+[data-theme="dark"] {
+  --bg: #000000;
+  --surface: #0d0d0d;
+  --surface2: #1a1a1a;
+  --border: #2a2a2a;
+  --text: #e4e6ed;
+  --text2: #888888;
+  --accent: #4ade80;
+  --accent-hover: #86efac;
+  --danger: #f87171;
+  --success: #4ade80;
+  --warn: #fbbf24;
+  --tag-bg: #0a2e0a;
+  --tag-text: #4ade80;
+  --code-bg: #000000;
+  --code-text: #cdd6f4;
+  --code-border: #1a1a1a;
+  --shadow: 0 1px 3px rgba(0,0,0,.5), 0 1px 2px rgba(0,0,0,.4);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 16px 80px;
+  transition: background var(--transition), color var(--transition);
+}
+
+.container { max-width: 920px; width: 100%; }
+
+/* ── Header ──────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.header h1 {
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.theme-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  transition: all var(--transition);
+  box-shadow: var(--shadow);
+}
+.theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Card ────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+  transition: background var(--transition), border var(--transition);
+}
+.card-title {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: var(--text2);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ── Mode tabs ───────────────────────────── */
+.mode-tabs {
+  display: inline-flex;
+  background: var(--surface2);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+.mode-tab {
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+.mode-tab.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0,0,0,.12);
+}
+
+/* ── IOC type picker ─────────────────────── */
+.ioc-type-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ioc-chip {
+  position: relative;
+  cursor: pointer;
+}
+.ioc-chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+.ioc-chip label {
+  display: inline-block;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 500;
+  background: var(--surface2);
+  color: var(--text2);
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition);
+  user-select: none;
+}
+.ioc-chip input:checked + label {
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.ioc-chip input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* auto-detect chip */
+.ioc-chip.auto label {
+  background: transparent;
+  border: 1.5px dashed var(--border);
+  font-style: italic;
+}
+.ioc-chip.auto input:checked + label {
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  border-style: solid;
+  border-color: var(--accent);
+  font-style: normal;
+}
+
+/* ── SIEM checkboxes ─────────────────────── */
+.siem-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.siem-chip {
+  position: relative;
+  cursor: pointer;
+}
+.siem-chip input { position: absolute; opacity: 0; width: 0; height: 0; }
+.siem-chip label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-size: 0.84rem;
+  font-weight: 500;
+  background: var(--surface2);
+  color: var(--text2);
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition);
+  user-select: none;
+}
+.siem-chip input:checked + label {
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.siem-logo {
+  width: 18px; height: 18px; border-radius: 4px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 800;
+}
+.siem-logo.qr  { background: #d91821; color: #fff; }
+.siem-logo.sp  { background: #000;    color: #26d962; }
+.siem-logo.rsa { background: #0066b3; color: #fff; }
+.siem-logo.dd  { background: #632ca6; color: #fff; }
+.siem-logo.wz  { background: #00a9e5; color: #fff; }
+
+/* ── Input / Textarea ────────────────────── */
+.ioc-input, .ioc-textarea {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 0.92rem;
+  font-family: "JetBrains Mono", "Cascadia Code", "Fira Code", monospace;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface2);
+  color: var(--text);
+  outline: none;
+  transition: all var(--transition);
+  resize: vertical;
+}
+.ioc-input::placeholder, .ioc-textarea::placeholder {
+  color: var(--text2);
+  font-family: "Inter", "Segoe UI", sans-serif;
+  font-size: 0.82rem;
+}
+.ioc-input:focus, .ioc-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+}
+.ioc-textarea { min-height: 140px; line-height: 1.6; }
+
+/* ── Bulk meta bar ───────────────────────── */
+.bulk-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: var(--text2);
+}
+.bulk-counter {
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--surface2);
+  font-size: 0.75rem;
+}
+.bulk-counter.over { background: #fde8e8; color: var(--danger); }
+[data-theme="dark"] .bulk-counter.over { background: #2a0a0a; }
+
+.bulk-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+.bulk-stats span { display: flex; align-items: center; gap: 4px; }
+.stat-valid { color: var(--success); }
+.stat-invalid { color: var(--danger); }
+.stat-unknown { color: var(--warn); }
+
+/* ── File Upload ────────────────────────── */
+.upload-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface2);
+  border: 1.5px dashed var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  transition: all var(--transition);
+  cursor: pointer;
+  flex-wrap: wrap;
+}
+.upload-area:hover, .upload-area.dragover {
+  border-color: var(--accent);
+  background: var(--tag-bg);
+}
+.upload-area input[type="file"] {
+  display: none;
+}
+.upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  border: none;
+}
+.upload-label:hover { background: var(--accent-hover); }
+.upload-hint {
+  font-size: 0.73rem;
+  color: var(--text2);
+}
+.file-name {
+  font-size: 0.73rem;
+  font-weight: 600;
+  color: var(--accent);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.upload-clear {
+  font-size: 0.72rem;
+  color: var(--danger);
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all var(--transition);
+}
+.upload-clear:hover { background: #fde8e8; }
+
+/* ── Per-line validation table ───────────── */
+.validation-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 0.78rem;
+}
+.validation-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text2);
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.validation-table td {
+  padding: 5px 8px;
+  border-bottom: 1px solid var(--border);
+  font-family: "JetBrains Mono", "Cascadia Code", "Fira Code", monospace;
+  font-size: 0.76rem;
+  vertical-align: middle;
+}
+.validation-table tr:hover td { background: var(--surface2); }
+.line-num { color: var(--text2); width: 30px; text-align: right; padding-right: 10px !important; }
+.line-status { width: 60px; }
+.line-status .dot {
+  display: inline-block;
+  width: 8px; height: 8px; border-radius: 50%;
+  margin-right: 5px;
+}
+.dot.ok   { background: var(--success); }
+.dot.bad  { background: var(--danger); }
+.dot.warn { background: var(--warn); }
+.line-type {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+}
+.line-type.auto-detect { opacity: 0.7; }
+
+.validation-scroll {
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-top: 8px;
+}
+
+/* ── Output ──────────────────────────────── */
+.output-block { margin-bottom: 20px; }
+.output-block:last-child { margin-bottom: 0; }
+.output-label {
+  font-size: 0.73rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 700;
+  color: var(--text2);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.output-label .badge {
+  font-size: 0.63rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+.badge.qr  { background: #fde8e8; color: #d91821; }
+.badge.sp  { background: #d1fae5; color: #065f46; }
+.badge.rsa { background: #dbeafe; color: #0066b3; }
+.badge.dd  { background: #f3e8ff; color: #632ca6; }
+.badge.wz  { background: #e0f7ff; color: #0078a0; }
+[data-theme="dark"] .badge.qr  { background: #1a3a1a; color: #4ade80; }
+[data-theme="dark"] .badge.sp  { background: #1a3a1a; color: #4ade80; }
+[data-theme="dark"] .badge.rsa { background: #1a3a1a; color: #4ade80; }
+[data-theme="dark"] .badge.dd  { background: #1a3a1a; color: #4ade80; }
+[data-theme="dark"] .badge.wz  { background: #1a3a1a; color: #4ade80; }
+
+.output-label .ioc-count {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text2);
+}
+
+pre.query-box {
+  position: relative;
+  background: var(--code-bg);
+  color: var(--code-text);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius);
+  padding: 16px 44px 16px 16px;
+  font-size: 0.8rem;
+  font-family: "JetBrains Mono", "Cascadia Code", "Fira Code", monospace;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-x: auto;
+  line-height: 1.55;
+  transition: background var(--transition), border var(--transition);
+  max-height: 420px;
+  overflow-y: auto;
+}
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: rgba(255,255,255,.07);
+  border: 1px solid var(--code-border);
+  border-radius: 6px;
+  color: var(--code-text);
+  font-size: 0.68rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-family: "Inter", "Segoe UI", sans-serif;
+  transition: all var(--transition);
+  opacity: 0;
+}
+pre.query-box:hover .copy-btn, .copy-btn.copied { opacity: 1; }
+.copy-btn:hover { background: rgba(255,255,255,.16); }
+.copy-btn.copied { background: #065f46; border-color: #059669; color: #fff; }
+
+/* collapse / expand for individual IOC queries in bulk */
+details.bulk-detail {
+  margin-top: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+details.bulk-detail summary {
+  padding: 10px 16px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--surface2);
+  color: var(--text);
+  user-select: none;
+  transition: background var(--transition);
+}
+details.bulk-detail summary:hover { background: var(--border); }
+details.bulk-detail .detail-body {
+  padding: 12px 16px;
+}
+
+/* ── Toast ───────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1a1d23;
+  color: #fff;
+  padding: 10px 24px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s ease;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Misc ────────────────────────────────── */
+.hidden { display: none !important; }
+.mt-2 { margin-top: 10px; }
+
+/* ── Responsive ──────────────────────────── */
+@media (max-width: 600px) {
+  body { padding: 10px 6px 60px; }
+  .card { padding: 14px 12px; }
+  .header h1 { font-size: 1.15rem; }
+  .ioc-type-row, .siem-row { gap: 5px; }
+  .ioc-chip label, .siem-chip label { padding: 5px 10px; font-size: 0.76rem; }
+  .mode-tab { padding: 5px 12px; font-size: 0.72rem; }
+  pre.query-box { font-size: 0.7rem; padding: 12px 36px 12px 10px; }
+  .validation-table { font-size: 0.7rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ── Header ──────────────────────────── -->
+  <div class="header">
+    <h1>SIEM Query Builder</h1>
+    <button class="theme-btn" id="themeToggle" title="Toggle dark / light mode" aria-label="Toggle theme">
+      <span id="themeLabel">Dark Mode</span>
+    </button>
+  </div>
+
+  <!-- ── Step 1: Mode + IOC Type ─────────── -->
+  <div class="card">
+    <div class="card-title">
+      <span>Step 1 &mdash; Mode &amp; IOC Type</span>
+      <div class="mode-tabs" id="modeTabs">
+        <button class="mode-tab active" data-mode="single">Single IOC</button>
+        <button class="mode-tab" data-mode="bulk">Bulk IOCs &nbsp;<small style="font-weight:400;opacity:.7">(up to 50)</small></button>
+      </div>
+    </div>
+    <div class="ioc-type-row" id="iocTypeRow">
+      <div class="ioc-chip auto">
+        <input type="radio" name="ioc" id="ioc-auto" value="auto">
+        <label for="ioc-auto">Auto-Detect</label>
+      </div>
+      <div class="ioc-chip"><input type="radio" name="ioc" id="ioc-ip"      value="ip"><label for="ioc-ip">IP Address</label></div>
+      <div class="ioc-chip"><input type="radio" name="ioc" id="ioc-email"   value="email"><label for="ioc-email">Email</label></div>
+      <div class="ioc-chip"><input type="radio" name="ioc" id="ioc-domain"  value="domain"><label for="ioc-domain">Domain / URL</label></div>
+      <div class="ioc-chip"><input type="radio" name="ioc" id="ioc-sha1"    value="sha1"><label for="ioc-sha1">SHA-1</label></div>
+      <div class="ioc-chip"><input type="radio" name="ioc" id="ioc-sha256"  value="sha256"><label for="ioc-sha256">SHA-256</label></div>
+      <div class="ioc-chip"><input type="radio" name="ioc" id="ioc-md5"     value="md5"><label for="ioc-md5">MD5</label></div>
+    </div>
+    <div id="iocTypeNote" style="font-size:0.75rem;color:var(--text2);margin-top:10px;">
+      <strong>Auto-Detect</strong> guesses the IOC type from each value &mdash; best for mixed pastes in <em>Bulk</em> mode.
+    </div>
+  </div>
+
+  <!-- ── Step 2: SIEM Platform ───────────── -->
+  <div class="card">
+    <div class="card-title">Step 2 &mdash; SIEM Platform</div>
+    <div class="siem-row" id="siemRow">
+      <div class="siem-chip">
+        <input type="checkbox" id="siem-qradar" value="qradar">
+        <label for="siem-qradar">IBM QRadar</label>
+      </div>
+      <div class="siem-chip">
+        <input type="checkbox" id="siem-splunk" value="splunk">
+        <label for="siem-splunk">Splunk</label>
+      </div>
+      <div class="siem-chip">
+        <input type="checkbox" id="siem-rsa" value="rsa">
+        <label for="siem-rsa">RSA NetWitness</label>
+      </div>
+      <div class="siem-chip">
+        <input type="checkbox" id="siem-datadog" value="datadog">
+        <label for="siem-datadog">Datadog SIEM</label>
+      </div>
+      <div class="siem-chip">
+        <input type="checkbox" id="siem-wazuh" value="wazuh">
+        <label for="siem-wazuh">Wazuh</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Step 3: IOC Value ───────────────── -->
+  <div class="card" id="inputCard">
+    <div class="card-title" id="inputCardTitle">Step 3 &mdash; IOC Value</div>
+
+    <!-- Single IOC input -->
+    <div id="singleInputWrapper">
+      <input
+        type="text" class="ioc-input" id="iocValue"
+        placeholder="e.g. 192.168.1.100  |  user@example.com  |  https://evil.com  |  d41d8cd98f00b204e9800998ecf8427e"
+        autocomplete="off" spellcheck="false"
+      >
+      <div class="hint" id="validationHint" style="font-size:0.78rem;color:var(--text2);margin-top:8px;">
+        Select an IOC type above and enter a value.
+      </div>
+    </div>
+
+    <!-- Bulk IOC textarea -->
+    <div id="bulkInputWrapper" class="hidden">
+      <div class="upload-area" id="uploadArea">
+        <input type="file" id="iocFileInput" accept=".txt,.csv,text/plain,text/csv">
+        <label for="iocFileInput" class="upload-label">Browse Files</label>
+        <span class="upload-hint" id="uploadHint">or drag &amp; drop a .txt or .csv file here</span>
+        <span class="file-name hidden" id="fileName"></span>
+        <button class="upload-clear hidden" id="uploadClear">Remove</button>
+      </div>
+      <textarea
+        class="ioc-textarea" id="iocBulkValue"
+        placeholder="Paste up to 50 IOCs — one per line...&#10;&#10;192.168.1.100&#10;10.0.0.0/24&#10;user@evil.com&#10;https://malware-c2.com/beacon&#10;d41d8cd98f00b204e9800998ecf8427e&#10;da39a3ee5e6b4b0d3255bfef95601890afd80709&#10;e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        autocomplete="off" spellcheck="false"
+      ></textarea>
+      <div class="bulk-meta">
+        <div>
+          <span class="bulk-counter" id="bulkCounter">0 / 50</span>
+          <span style="margin-left:6px;" id="bulkHint">Paste one IOC per line.</span>
+        </div>
+        <div class="bulk-stats" id="bulkStats">
+          <span class="stat-valid hidden" id="statValid"><span id="statValidCount">0</span> valid</span>
+          <span class="stat-invalid hidden" id="statInvalid"><span id="statInvalidCount">0</span> invalid</span>
+          <span class="stat-unknown hidden" id="statUnknown"><span id="statUnknownCount">0</span> unknown</span>
+        </div>
+      </div>
+      <!-- Per-line validation -->
+      <div class="validation-scroll hidden" id="validationScroll">
+        <table class="validation-table" id="validationTable">
+          <thead><tr><th class="line-num">#</th><th>Value</th><th class="line-status">Status</th><th>Detected Type</th></tr></thead>
+          <tbody id="validationBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Step 4: Generated Queries ───────── -->
+  <div class="card" id="outputCard">
+    <div class="card-title">
+      <span>Step 4 &mdash; Generated Queries</span>
+      <button class="copy-btn" id="copyAllBtn" style="position:static;opacity:1;font-size:0.72rem;padding:5px 12px;" title="Copy all queries at once">
+        Copy All
+      </button>
+    </div>
+    <div id="outputContainer">
+      <div style="color:var(--text2);font-size:0.85rem;padding:20px 0;text-align:center;">
+        Select an IOC type, pick at least one SIEM, and enter a value to generate queries.
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="text-align:center;padding:12px 0 4px;font-size:0.7rem;color:var(--text2);opacity:0.6;">
+    Built by <strong>Hashir14k</strong> &mdash; offline SIEM query builder for hunters, by a hunter.
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── DOM refs ────────────────────────── */
+  const iocRadios     = document.querySelectorAll('input[name="ioc"]');
+  const siemBoxes     = ['siem-qradar','siem-splunk','siem-rsa','siem-datadog','siem-wazuh'].map(id => document.getElementById(id));
+  const iocValueEl    = document.getElementById('iocValue');
+  const iocBulkEl     = document.getElementById('iocBulkValue');
+  const hintEl        = document.getElementById('validationHint');
+  const outputCtr     = document.getElementById('outputContainer');
+  const themeBtn      = document.getElementById('themeToggle');
+  const themeLabel    = document.getElementById('themeLabel');
+  const toastEl       = document.getElementById('toast');
+  const htmlEl        = document.documentElement;
+  const modeTabs      = document.querySelectorAll('.mode-tab');
+  const singleWrapper = document.getElementById('singleInputWrapper');
+  const bulkWrapper   = document.getElementById('bulkInputWrapper');
+  const bulkCounter   = document.getElementById('bulkCounter');
+  const bulkHint      = document.getElementById('bulkHint');
+  const bulkStats     = document.getElementById('bulkStats');
+  const statValid     = document.getElementById('statValid');
+  const statInvalid   = document.getElementById('statInvalid');
+  const statUnknown   = document.getElementById('statUnknown');
+  const statValidC    = document.getElementById('statValidCount');
+  const statInvalidC  = document.getElementById('statInvalidCount');
+  const statUnknownC  = document.getElementById('statUnknownCount');
+  const validScroll   = document.getElementById('validationScroll');
+  const validBody     = document.getElementById('validationBody');
+  const copyAllBtn    = document.getElementById('copyAllBtn');
+  const iocTypeNote   = document.getElementById('iocTypeNote');
+  const inputCardTitle = document.getElementById('inputCardTitle');
+
+  /* ── State ───────────────────────────── */
+  let currentMode   = 'single';
+  let currentIOC    = 'auto';
+  let currentValue  = '';
+  let toastTimer    = null;
+  let lastBulkLines = [];
+
+  /* ═══════════════════════════════════════════
+     IOC DETECTION
+     ═══════════════════════════════════════════ */
+
+  const IOC_PATTERNS = [
+    { type: 'sha256', rx: /^[a-fA-F0-9]{64}$/,              label: 'SHA-256 (64 hex)' },
+    { type: 'sha1',   rx: /^[a-fA-F0-9]{40}$/,              label: 'SHA-1 (40 hex)' },
+    { type: 'md5',    rx: /^[a-fA-F0-9]{32}$/,              label: 'MD5 (32 hex)' },
+    { type: 'ip',     rx: /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/, label: 'IPv4 / CIDR' },
+    { type: 'email',  rx: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,    label: 'Email address' },
+    { type: 'domain', rx: /^(https?:\/\/)?[\w.-]+\.\w{2,}(\/\S*)?$/, label: 'Domain / URL' },
+  ];
+
+  function detectIOCType(value) {
+    const v = value.trim();
+    if (!v) return null;
+    for (const p of IOC_PATTERNS) {
+      if (p.rx.test(v)) return p.type;
+    }
+    return null;
+  }
+
+  function getEffectiveType(specifiedType, value) {
+    if (specifiedType !== 'auto') return specifiedType;
+    return detectIOCType(value) || 'unknown';
+  }
+
+  /* ── Validation ──────────────────────── */
+  const VALIDATORS = {
+    ip:     { rx: /^(\d{1,3}\.){3}\d{1,3}(\/\d{1,2})?$/,  label: 'e.g. 192.168.1.100 or 10.0.0.0/24' },
+    email:  { rx: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,             label: 'e.g. user@example.com' },
+    domain: { rx: /^(https?:\/\/)?[\w.-]+\.\w{2,}(\/\S*)?$/, label: 'e.g. evil.com or https://evil.com/path' },
+    sha1:   { rx: /^[a-fA-F0-9]{40}$/,                      label: '40 hex chars' },
+    sha256: { rx: /^[a-fA-F0-9]{64}$/,                      label: '64 hex chars' },
+    md5:    { rx: /^[a-fA-F0-9]{32}$/,                      label: '32 hex chars' },
+  };
+
+  function validateIOC(type, value) {
+    if (!type || type === 'unknown' || type === 'auto') return { ok: false, msg: 'Could not detect IOC type.' };
+    if (!value.trim()) return { ok: false, msg: 'Enter a value.' };
+    const v = value.trim();
+    const rule = VALIDATORS[type];
+    if (!rule) return { ok: false, msg: 'Unknown IOC type.' };
+    if (!rule.rx.test(v)) return { ok: false, msg: `Invalid ${type.toUpperCase()} format — ${rule.label}.` };
+    return { ok: true, msg: '', sanitized: v, detectedType: type };
+  }
+
+  /* ═══════════════════════════════════════════
+     QUERY TEMPLATES  (single-value)
+     ═══════════════════════════════════════════ */
+
+  const SINGLE_TEMPLATES = {
+    ip: {
+      qradar: v =>
+        `SELECT * FROM events WHERE (sourceip = '${v}' OR destinationip = '${v}' OR identityip = '${v}')\n` +
+        `-- Flow data\nSELECT * FROM flows WHERE (sourceip = '${v}' OR destinationip = '${v}')\n` +
+        `-- AQL reference (last 7 days)\nSELECT * FROM events WHERE (sourceip = '${v}' OR destinationip = '${v}') LAST 7 DAYS`,
+      splunk: v =>
+        `index=* (src_ip="${v}" OR dest_ip="${v}" OR src="${v}" OR dst="${v}")\n` +
+        `| stats count by index, sourcetype, src_ip, dest_ip\n` +
+        `| sort - count`,
+      rsa: v =>
+        `ip.src = ${v} || ip.dst = ${v} || alias.ip = ${v}`,
+      datadog: v =>
+        `@src.ip:${v} OR @dst.ip:${v} OR @network.client.ip:${v} OR @network.destination.ip:${v}\n` +
+        `-- With service scope\nservice:firewall @src.ip:${v}\n` +
+        `service:ids @network.client.ip:${v}`,
+      wazuh: v =>
+        `data.srcip:${v} OR data.dstip:${v} OR srcip:${v} OR dstip:${v}\n` +
+        `-- Rule-based hunt\nrule.level>=10 AND (data.srcip:${v} OR data.dstip:${v})\n` +
+        `-- Firewall / IDS scope\nlocation:firewall AND (srcip:${v} OR dstip:${v})`,
+    },
+    email: {
+      qradar: v =>
+        `SELECT * FROM events WHERE LOWER(username) LIKE '%${v.toLowerCase()}%'\n` +
+        `-- Payload search\nSELECT * FROM events WHERE payload LIKE '%${v}%'\n` +
+        `-- Mail category\nSELECT * FROM events WHERE category = 16000 AND LOWER(username) LIKE '%${v.toLowerCase()}%' LAST 7 DAYS`,
+      splunk: v =>
+        `index=* ("${v}" OR sender="${v}" OR recipient="${v}" OR mail_from="${v}" OR mail_to="${v}")\n` +
+        `| stats count by index, sourcetype\n` +
+        `| sort - count`,
+      rsa: v =>
+        `(mail.src = '${v}' || mail.dst = '${v}' || alias.host = '${v}')`,
+      datadog: v =>
+        `@email:*${v}* OR @usr.email:*${v}* OR @mail.from:*${v}* OR @mail.to:*${v}*\n` +
+        `-- Suspicious email activity\nservice:email @email:*${v}*\n` +
+        `source:o365 @usr.email:*${v}*`,
+      wazuh: v =>
+        `data.email:*${v}* OR email:*${v}* OR mail.from:*${v}* OR mail.to:*${v}*\n` +
+        `-- High-priority mail alerts\nrule.level>=10 AND (data.email:*${v}* OR email:*${v}*)\n` +
+        `-- MTA / Exchange scope\nlocation:mail AND (mail.from:*${v}* OR mail.to:*${v}*)`,
+    },
+    domain: {
+      qradar: v => {
+        const esc = v.replace(/'/g, "''");
+        return `SELECT * FROM events WHERE (domainname = '${esc}' OR url LIKE '%${esc}%' OR hostname = '${esc}')\n` +
+               `-- DNS queries\nSELECT * FROM events WHERE (qid = 5000001 AND payload LIKE '%${esc}%')\n` +
+               `-- HTTP proxy / firewall\nSELECT * FROM events WHERE (category = 1000 AND url LIKE '%${esc}%') LAST 7 DAYS`;
+      },
+      splunk: v =>
+        `index=* (url="${v}" OR domain="${v}" OR dest_host="${v}" OR host="${v}" OR query="${v}")\n` +
+        `| stats count by index, sourcetype, url, dest_host\n` +
+        `| sort - count`,
+      rsa: v =>
+        `(alias.host = '${v}' || web.domain = '${v}' || dns.hostname = '${v}')`,
+      datadog: v =>
+        `@dns.question:*${v}* OR @http.url:*${v}* OR @network.client.domain:*${v}* OR @http.host:*${v}*\n` +
+        `-- DNS-specific hunt\nservice:dns @dns.question:*${v}*\n` +
+        `-- Proxy / web traffic\nservice:proxy @http.url:*${v}*`,
+      wazuh: v =>
+        `data.url:*${v}* OR data.domain:${v} OR url:*${v}* OR domain:${v} OR hostname:${v}\n` +
+        `-- DNS / Proxy scope\nrule.level>=8 AND (data.url:*${v}* OR data.domain:${v})\n` +
+        `-- Web server logs\nlocation:web AND (url:*${v}* OR hostname:${v})`,
+    },
+    sha1: {
+      qradar: v =>
+        `SELECT * FROM events WHERE (filehash = '${v}' OR sha1hash = '${v}')\n` +
+        `-- Payload search\nSELECT * FROM events WHERE payload LIKE '%${v}%'\n` +
+        `-- File integrity monitoring\nSELECT * FROM events WHERE (category = 7000 AND filehash = '${v}') LAST 7 DAYS`,
+      splunk: v =>
+        `index=* (sha1="${v}" OR file_hash="${v}" OR hash="${v}")\n` +
+        `| stats count by index, sourcetype, file_name, file_path\n` +
+        `| sort - count`,
+      rsa: v =>
+        `(file.hash = '${v}' || checksum = '${v}')`,
+      datadog: v =>
+        `@file.hash.sha1:${v} OR @file.hash:${v}\n` +
+        `-- Endpoint / AV scope\nservice:endpoint (@file.hash.sha1:${v} OR @file.hash:${v})\n` +
+        `-- Threat intel match\nsource:threat_intel @file.hash.sha1:${v}`,
+      wazuh: v =>
+        `file.hash:${v} OR hash:${v} OR sha1:${v}\n` +
+        `-- FIM / Malware detection\nrule.level>=12 AND (file.hash:${v} OR hash:${v})\n` +
+        `-- Syscheck / Integrity\nlocation:syscheck AND sha1:${v}`,
+    },
+    sha256: {
+      qradar: v =>
+        `SELECT * FROM events WHERE (sha256hash = '${v}' OR filehash = '${v}')\n` +
+        `-- Payload search\nSELECT * FROM events WHERE payload LIKE '%${v}%'\n` +
+        `-- File integrity monitoring\nSELECT * FROM events WHERE (category = 7000 AND sha256hash = '${v}') LAST 7 DAYS`,
+      splunk: v =>
+        `index=* (sha256="${v}" OR file_hash="${v}" OR hash="${v}")\n` +
+        `| stats count by index, sourcetype, file_name, file_path\n` +
+        `| sort - count`,
+      rsa: v =>
+        `(file.hash = '${v}' || checksum.sha256 = '${v}')`,
+      datadog: v =>
+        `@file.hash.sha256:${v} OR @file.hash:${v}\n` +
+        `-- Endpoint / AV scope\nservice:endpoint (@file.hash.sha256:${v} OR @file.hash:${v})\n` +
+        `-- Threat intel match\nsource:threat_intel @file.hash.sha256:${v}`,
+      wazuh: v =>
+        `file.hash:${v} OR hash:${v} OR sha256:${v}\n` +
+        `-- FIM / Malware detection\nrule.level>=12 AND (file.hash:${v} OR hash:${v})\n` +
+        `-- Syscheck / Integrity\nlocation:syscheck AND sha256:${v}`,
+    },
+    md5: {
+      qradar: v =>
+        `SELECT * FROM events WHERE (md5hash = '${v}' OR filehash = '${v}')\n` +
+        `-- Payload search\nSELECT * FROM events WHERE payload LIKE '%${v}%'\n` +
+        `-- File integrity monitoring\nSELECT * FROM events WHERE (category = 7000 AND md5hash = '${v}') LAST 7 DAYS`,
+      splunk: v =>
+        `index=* (md5="${v}" OR file_hash="${v}" OR hash="${v}")\n` +
+        `| stats count by index, sourcetype, file_name, file_path\n` +
+        `| sort - count`,
+      rsa: v =>
+        `(file.hash = '${v}' || checksum.md5 = '${v}')`,
+      datadog: v =>
+        `@file.hash.md5:${v} OR @file.hash:${v}\n` +
+        `-- Endpoint / AV scope\nservice:endpoint (@file.hash.md5:${v} OR @file.hash:${v})\n` +
+        `-- Threat intel match\nsource:threat_intel @file.hash.md5:${v}`,
+      wazuh: v =>
+        `file.hash:${v} OR hash:${v} OR md5:${v}\n` +
+        `-- FIM / Malware detection\nrule.level>=12 AND (file.hash:${v} OR hash:${v})\n` +
+        `-- Syscheck / Integrity\nlocation:syscheck AND md5:${v}`,
+    },
+  };
+
+  /* ═══════════════════════════════════════════
+     BULK QUERY TEMPLATES  (array of values)
+     ═══════════════════════════════════════════ */
+
+  function quoteList(arr)  { return arr.map(v => `'${v}'`).join(', '); }
+  function dqList(arr)     { return arr.map(v => `"${v}"`).join(', '); }
+
+  function chunkArray(arr, size) {
+    const out = [];
+    for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+    return out;
+  }
+
+  const BULK_CHUNK = {
+    ip: {
+      qradar: arr =>
+        `SELECT * FROM events WHERE sourceip IN (${quoteList(arr)}) OR destinationip IN (${quoteList(arr)}) OR identityip IN (${quoteList(arr)})\n` +
+        `SELECT * FROM flows WHERE sourceip IN (${quoteList(arr)}) OR destinationip IN (${quoteList(arr)})\n` +
+        `SELECT * FROM events WHERE sourceip IN (${quoteList(arr)}) OR destinationip IN (${quoteList(arr)}) LAST 7 DAYS`,
+      splunk: arr =>
+        `index=* (${arr.map(v => `src_ip="${v}"`).join(' OR ')} OR ${arr.map(v => `dest_ip="${v}"`).join(' OR ')})\n` +
+        `| stats count by index, sourcetype, src_ip, dest_ip | sort - count`,
+      rsa: arr =>
+        arr.map(v => `(ip.src = ${v} || ip.dst = ${v} || alias.ip = ${v})`).join(' || '),
+      datadog: arr =>
+        `(${arr.map(v => `@src.ip:${v} OR @dst.ip:${v} OR @network.client.ip:${v}`).join(') OR (')})\n` +
+        `service:firewall (${arr.map(v => `@src.ip:${v} OR @dst.ip:${v}`).join(' OR ')})`,
+      wazuh: arr =>
+        `(${arr.map(v => `data.srcip:${v} OR data.dstip:${v} OR srcip:${v} OR dstip:${v}`).join(') OR (')})\n` +
+        `rule.level>=10 AND (${arr.map(v => `data.srcip:${v} OR data.dstip:${v}`).join(' OR ')})`,
+    },
+    email: {
+      qradar: arr =>
+        `SELECT * FROM events WHERE LOWER(username) IN (${quoteList(arr.map(v => v.toLowerCase()))})\n` +
+        `SELECT * FROM events WHERE ${arr.map(v => `payload LIKE '%${v}%'`).join(' OR ')}\n` +
+        `SELECT * FROM events WHERE category = 16000 AND LOWER(username) IN (${quoteList(arr.map(v => v.toLowerCase()))}) LAST 7 DAYS`,
+      splunk: arr =>
+        `index=* (${arr.map(v => `"${v}"`).join(' OR ')} OR sender IN (${dqList(arr)}) OR recipient IN (${dqList(arr)}) OR mail_from IN (${dqList(arr)}) OR mail_to IN (${dqList(arr)}))\n` +
+        `| stats count by index, sourcetype | sort - count`,
+      rsa: arr =>
+        arr.map(v => `(mail.src = '${v}' || mail.dst = '${v}' || alias.host = '${v}')`).join(' || '),
+      datadog: arr =>
+        `(${arr.map(v => `@email:*${v}* OR @usr.email:*${v}*`).join(') OR (')})\n` +
+        `service:email (${arr.map(v => `@email:*${v}* OR @mail.from:*${v}* OR @mail.to:*${v}*`).join(' OR ')})`,
+      wazuh: arr =>
+        `(${arr.map(v => `data.email:*${v}* OR email:*${v}* OR mail.from:*${v}* OR mail.to:*${v}*`).join(') OR (')})\n` +
+        `rule.level>=10 AND (${arr.map(v => `data.email:*${v}* OR email:*${v}*`).join(' OR ')})`,
+    },
+    domain: {
+      qradar: arr => {
+        const esc = arr.map(v => v.replace(/'/g, "''"));
+        return `SELECT * FROM events WHERE hostname IN (${quoteList(esc)}) OR ${esc.map(v => `url LIKE '%${v}%'`).join(' OR ')}\n` +
+               `SELECT * FROM events WHERE (category = 1000 AND (${esc.map(v => `url LIKE '%${v}%'`).join(' OR ')})) LAST 7 DAYS`;
+      },
+      splunk: arr =>
+        `index=* (${arr.map(v => `dest_host="${v}"`).join(' OR ')} OR ${arr.map(v => `url="${v}"`).join(' OR ')} OR host IN (${dqList(arr)}) OR domain IN (${dqList(arr)}))\n` +
+        `| stats count by index, sourcetype, url, dest_host | sort - count`,
+      rsa: arr =>
+        arr.map(v => `(alias.host = '${v}' || web.domain = '${v}' || dns.hostname = '${v}')`).join(' || '),
+      datadog: arr =>
+        `(${arr.map(v => `@dns.question:*${v}* OR @http.url:*${v}* OR @http.host:*${v}*`).join(') OR (')})\n` +
+        `service:dns (${arr.map(v => `@dns.question:*${v}*`).join(' OR ')})`,
+      wazuh: arr =>
+        `(${arr.map(v => `data.url:*${v}* OR data.domain:${v} OR url:*${v}* OR domain:${v}`).join(') OR (')})\n` +
+        `rule.level>=8 AND (${arr.map(v => `data.url:*${v}* OR data.domain:${v}`).join(' OR ')})`,
+    },
+    sha1: {
+      qradar: arr =>
+        `SELECT * FROM events WHERE filehash IN (${quoteList(arr)}) OR sha1hash IN (${quoteList(arr)})\n` +
+        `SELECT * FROM events WHERE category = 7000 AND filehash IN (${quoteList(arr)}) LAST 7 DAYS`,
+      splunk: arr =>
+        `index=* (sha1 IN (${dqList(arr)}) OR file_hash IN (${dqList(arr)}) OR hash IN (${dqList(arr)}))\n` +
+        `| stats count by index, sourcetype, file_name, file_path | sort - count`,
+      rsa: arr =>
+        `file.hash IN [ ${quoteList(arr)} ] || checksum IN [ ${quoteList(arr)} ]`,
+      datadog: arr =>
+        `@file.hash.sha1 IN (${dqList(arr)}) OR @file.hash IN (${dqList(arr)})\n` +
+        `service:endpoint (@file.hash.sha1 IN (${dqList(arr)}) OR @file.hash IN (${dqList(arr)}))`,
+      wazuh: arr =>
+        `file.hash IN (${quoteList(arr)}) OR hash IN (${quoteList(arr)}) OR sha1 IN (${quoteList(arr)})\n` +
+        `rule.level>=12 AND (file.hash IN (${quoteList(arr)}) OR hash IN (${quoteList(arr)}))`,
+    },
+    sha256: {
+      qradar: arr =>
+        `SELECT * FROM events WHERE sha256hash IN (${quoteList(arr)}) OR filehash IN (${quoteList(arr)})\n` +
+        `SELECT * FROM events WHERE category = 7000 AND sha256hash IN (${quoteList(arr)}) LAST 7 DAYS`,
+      splunk: arr =>
+        `index=* (sha256 IN (${dqList(arr)}) OR file_hash IN (${dqList(arr)}) OR hash IN (${dqList(arr)}))\n` +
+        `| stats count by index, sourcetype, file_name, file_path | sort - count`,
+      rsa: arr =>
+        `file.hash IN [ ${quoteList(arr)} ] || checksum.sha256 IN [ ${quoteList(arr)} ]`,
+      datadog: arr =>
+        `@file.hash.sha256 IN (${dqList(arr)}) OR @file.hash IN (${dqList(arr)})\n` +
+        `service:endpoint (@file.hash.sha256 IN (${dqList(arr)}) OR @file.hash IN (${dqList(arr)}))`,
+      wazuh: arr =>
+        `file.hash IN (${quoteList(arr)}) OR hash IN (${quoteList(arr)}) OR sha256 IN (${quoteList(arr)})\n` +
+        `rule.level>=12 AND (file.hash IN (${quoteList(arr)}) OR hash IN (${quoteList(arr)}))`,
+    },
+    md5: {
+      qradar: arr =>
+        `SELECT * FROM events WHERE md5hash IN (${quoteList(arr)}) OR filehash IN (${quoteList(arr)})\n` +
+        `SELECT * FROM events WHERE category = 7000 AND md5hash IN (${quoteList(arr)}) LAST 7 DAYS`,
+      splunk: arr =>
+        `index=* (md5 IN (${dqList(arr)}) OR file_hash IN (${dqList(arr)}) OR hash IN (${dqList(arr)}))\n` +
+        `| stats count by index, sourcetype, file_name, file_path | sort - count`,
+      rsa: arr =>
+        `file.hash IN [ ${quoteList(arr)} ] || checksum.md5 IN [ ${quoteList(arr)} ]`,
+      datadog: arr =>
+        `@file.hash.md5 IN (${dqList(arr)}) OR @file.hash IN (${dqList(arr)})\n` +
+        `service:endpoint (@file.hash.md5 IN (${dqList(arr)}) OR @file.hash IN (${dqList(arr)}))`,
+      wazuh: arr =>
+        `file.hash IN (${quoteList(arr)}) OR hash IN (${quoteList(arr)}) OR md5 IN (${quoteList(arr)})\n` +
+        `rule.level>=12 AND (file.hash IN (${quoteList(arr)}) OR hash IN (${quoteList(arr)}))`,
+    },
+  };
+
+  const DEFAULT_CHUNK_SIZE = 10;
+
+  /* ═══════════════════════════════════════════
+     UTILS
+     ═══════════════════════════════════════════ */
+
+  function escapeHTML(str) {
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return str.replace(/[&<>"']/g, ch => map[ch]);
+  }
+
+  function getSelectedSIEMs() {
+    return siemBoxes.filter(cb => cb.checked).map(cb => cb.value);
+  }
+
+  /* ═══════════════════════════════════════════
+     PARSE BULK LINES
+     ═══════════════════════════════════════════ */
+
+  function parseBulkLines(raw) {
+    const lines = raw.split(/\r?\n/);
+    const results = [];
+    for (let i = 0; i < lines.length; i++) {
+      const text = lines[i].trim();
+      if (!text) continue;
+      if (results.length >= 50) break;
+      const detected = detectIOCType(text);
+      const effective = currentIOC === 'auto' ? (detected || 'unknown') : currentIOC;
+      const valid = effective !== 'unknown' && VALIDATORS[effective] && VALIDATORS[effective].rx.test(text);
+      results.push({
+        line: i + 1,
+        text,
+        detectedType: detected,
+        effectiveType: effective,
+        valid,
+      });
+    }
+    return results;
+  }
+
+  /* ═══════════════════════════════════════════
+     RENDER
+     ═══════════════════════════════════════════ */
+
+  function render() {
+    if (currentMode === 'single') {
+      renderSingle();
+    } else {
+      renderBulk();
+    }
+  }
+
+  /* ── Single render ───────────────────── */
+  function renderSingle() {
+    const siems = getSelectedSIEMs();
+    const val   = validateIOC(currentIOC === 'auto' ? detectIOCType(iocValueEl.value) || 'unknown' : currentIOC, iocValueEl.value);
+
+    /* hint */
+    if (currentIOC !== 'auto' && val.ok) {
+      hintEl.innerHTML = 'Ready &mdash; pick at least one SIEM below.';
+      hintEl.style.color = '';
+    } else if (currentIOC !== 'auto' && currentValue.trim() && !val.ok) {
+      hintEl.innerHTML = `Warning: ${val.msg}`;
+      hintEl.style.color = 'var(--danger)';
+    } else if (currentIOC !== 'auto') {
+      hintEl.innerHTML = `Enter a ${currentIOC.toUpperCase()} value (${VALIDATORS[currentIOC] ? VALIDATORS[currentIOC].label : '...'}).`;
+      hintEl.style.color = '';
+    } else if (currentIOC === 'auto') {
+      const det = detectIOCType(iocValueEl.value);
+      if (det) {
+        hintEl.innerHTML = `Auto-detected: <strong>${det.toUpperCase()}</strong> &mdash; ready.`;
+        hintEl.style.color = 'var(--success)';
+      } else if (iocValueEl.value.trim()) {
+        hintEl.innerHTML = `Could not auto-detect IOC type. Select one manually.`;
+        hintEl.style.color = 'var(--danger)';
+      } else {
+        hintEl.innerHTML = 'Enter a value &mdash; type will be auto-detected, or select manually above.';
+        hintEl.style.color = '';
+      }
+    }
+
+    /* output */
+    const effectiveType = currentIOC === 'auto' ? (detectIOCType(iocValueEl.value) || 'unknown') : currentIOC;
+    const effectiveVal  = validateIOC(effectiveType, iocValueEl.value);
+
+    if (!effectiveVal.ok || siems.length === 0) {
+      let msg = '';
+      if (!iocValueEl.value.trim()) msg += 'Enter an IOC value above.';
+      else if (effectiveType === 'unknown' && currentIOC === 'auto') msg += 'Could not detect IOC type &mdash; select one manually.';
+      else if (!effectiveVal.ok) msg += effectiveVal.msg;
+      else if (siems.length === 0) msg += 'Pick at least one SIEM platform.';
+      outputCtr.innerHTML = `<div style="color:var(--text2);font-size:0.85rem;padding:20px 0;text-align:center;">${msg}</div>`;
+      return;
+    }
+
+    const sanitized = effectiveVal.sanitized;
+    const siemNames = { qradar: 'QRadar', splunk: 'Splunk', rsa: 'RSA NetWitness', datadog: 'Datadog SIEM', wazuh: 'Wazuh' };
+    const siemBadge = { qradar: 'qr', splunk: 'sp', rsa: 'rsa', datadog: 'dd', wazuh: 'wz' };
+
+    let html = '';
+    for (const siem of siems) {
+      const query = SINGLE_TEMPLATES[effectiveType][siem](sanitized);
+      html +=
+        `<div class="output-block">` +
+        `<div class="output-label">` +
+        `<span class="badge ${siemBadge[siem]}">${siemNames[siem]}</span> ${effectiveType.toUpperCase()} Query` +
+        `</div>` +
+        `<pre class="query-box">${escapeHTML(query)}<button class="copy-btn" data-query="${escapeHTML(query)}">Copy</button></pre>` +
+        `</div>`;
+    }
+
+    outputCtr.innerHTML = html;
+    attachCopyHandlers();
+  }
+
+  /* ── Bulk render ─────────────────────── */
+  function renderBulk() {
+    const raw = iocBulkEl.value;
+    const lines = parseBulkLines(raw);
+    lastBulkLines = lines;
+
+    /* counter */
+    const cnt = lines.length;
+    bulkCounter.textContent = `${cnt} / 50`;
+    bulkCounter.className = 'bulk-counter' + (cnt > 50 ? ' over' : '');
+
+    /* stats */
+    const validOnes   = lines.filter(l => l.valid);
+    const invalidOnes = lines.filter(l => !l.valid && l.effectiveType !== 'unknown');
+    const unknownOnes = lines.filter(l => l.effectiveType === 'unknown');
+
+    statValidC.textContent   = validOnes.length;
+    statInvalidC.textContent = invalidOnes.length;
+    statUnknownC.textContent = unknownOnes.length;
+    statValid.classList.toggle('hidden', validOnes.length === 0);
+    statInvalid.classList.toggle('hidden', invalidOnes.length === 0);
+    statUnknown.classList.toggle('hidden', unknownOnes.length === 0);
+
+    /* hint */
+    if (cnt === 0) {
+      bulkHint.textContent = 'Paste one IOC per line.';
+    } else if (cnt > 50) {
+      bulkHint.innerHTML = `<strong>${cnt}</strong> lines &mdash; only first 50 will be used.`;
+      bulkHint.style.color = 'var(--danger)';
+    } else {
+      bulkHint.innerHTML = `<strong>${cnt}</strong> IOC${cnt !== 1 ? 's' : ''} parsed &mdash; <strong>${validOnes.length}</strong> valid.`;
+      bulkHint.style.color = '';
+    }
+
+    /* validation table */
+    if (lines.length > 0) {
+      validScroll.classList.remove('hidden');
+      let tbody = '';
+      for (const l of lines) {
+        const statusIcon = l.valid ? '<span class="dot ok"></span>OK' :
+                           l.effectiveType === 'unknown' ? '<span class="dot warn"></span>Unknown' :
+                           '<span class="dot bad"></span>Invalid';
+        const typeLabel = l.effectiveType === 'unknown' ? '???' : l.effectiveType.toUpperCase();
+        tbody +=
+          `<tr>` +
+          `<td class="line-num">${l.line}</td>` +
+          `<td title="${escapeHTML(l.text)}">${escapeHTML(l.text.length > 60 ? l.text.slice(0, 57) + '...' : l.text)}</td>` +
+          `<td class="line-status">${statusIcon}</td>` +
+          `<td><span class="line-type">${typeLabel}</span></td>` +
+          `</tr>`;
+      }
+      validBody.innerHTML = tbody;
+    } else {
+      validScroll.classList.add('hidden');
+    }
+
+    /* ── Build output ──────────────────── */
+    const siems = getSelectedSIEMs();
+    const grouped = {};
+    for (const l of lines) {
+      if (!l.valid) continue;
+      if (!grouped[l.effectiveType]) grouped[l.effectiveType] = [];
+      grouped[l.effectiveType].push(l.text);
+    }
+
+    const siemNames  = { qradar: 'QRadar', splunk: 'Splunk', rsa: 'RSA NetWitness', datadog: 'Datadog SIEM', wazuh: 'Wazuh' };
+    const siemBadge  = { qradar: 'qr', splunk: 'sp', rsa: 'rsa', datadog: 'dd', wazuh: 'wz' };
+    const typeNames  = { ip: 'IP', email: 'Email', domain: 'Domain/URL', sha1: 'SHA-1', sha256: 'SHA-256', md5: 'MD5' };
+
+    if (Object.keys(grouped).length === 0 || siems.length === 0) {
+      let msg = '';
+      if (lines.length === 0) msg = 'Paste IOCs above (one per line) to generate queries.';
+      else if (Object.keys(grouped).length === 0) msg = 'No valid IOCs found. Check the validation table above.';
+      else if (siems.length === 0) msg = 'Pick at least one SIEM platform.';
+      outputCtr.innerHTML = `<div style="color:var(--text2);font-size:0.85rem;padding:20px 0;text-align:center;">${msg}</div>`;
+      return;
+    }
+
+    let html = '';
+
+    /* ── Chunk size selector ───────────── */
+    const totalValid = validOnes.length;
+    html +=
+      `<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px;padding:8px 12px;background:var(--surface2);border-radius:8px;font-size:0.78rem;">` +
+      `<span style="color:var(--text2);"><strong>${totalValid}</strong> valid IOC${totalValid !== 1 ? 's' : ''} across <strong>${Object.keys(grouped).length}</strong> type${Object.keys(grouped).length !== 1 ? 's' : ''}</span>` +
+      `<span style="display:flex;align-items:center;gap:6px;color:var(--text2);">` +
+      `Chunk size: ` +
+      `<select id="chunkSizeSelect" style="padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.78rem;cursor:pointer;">` +
+      `<option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="25">25</option><option value="50">All (50)</option>` +
+      `</select>` +
+      `</span>` +
+      `</div>`;
+
+    /* ── SECTION 1: INDIVIDUAL QUERIES ──── */
+    html +=
+      `<div style="margin-bottom:6px;font-weight:700;font-size:0.82rem;color:var(--text);display:flex;align-items:center;gap:6px;">` +
+      `Individual Queries <span style="font-weight:400;font-size:0.72rem;color:var(--text2);">&mdash; one query per IOC, organized by SIEM</span>` +
+      `</div>`;
+
+    for (const [type, values] of Object.entries(grouped)) {
+      const vals = values.slice(0, 50);
+      const typeLabel = typeNames[type] || type.toUpperCase();
+
+      html +=
+        `<details class="bulk-detail"${vals.length <= 5 ? ' open' : ''}>` +
+        `<summary>${typeLabel} &mdash; <strong>${vals.length}</strong> IOC${vals.length !== 1 ? 's' : ''}</summary>` +
+        `<div class="detail-body">`;
+
+      for (const siem of siems) {
+        html +=
+          `<div style="font-weight:600;font-size:0.72rem;color:var(--accent);margin:8px 0 4px;display:flex;align-items:center;gap:6px;">` +
+          `<span class="badge ${siemBadge[siem]}" style="font-size:0.6rem;">${siemNames[siem]}</span>` +
+          `</div>`;
+
+        let combined = '';
+        for (const v of vals) {
+          const q = SINGLE_TEMPLATES[type][siem](v);
+          combined += q + '\n\n';
+        }
+        html +=
+          `<pre class="query-box" style="font-size:0.74rem;max-height:340px;">${escapeHTML(combined.trim())}<button class="copy-btn" data-query="${escapeHTML(combined.trim())}">Copy All</button></pre>`;
+      }
+
+      html += `</div></details>`;
+    }
+
+    /* ── SECTION 2: CHUNKED COMBINED QUERIES ── */
+    html +=
+      `<div style="margin:20px 0 6px;font-weight:700;font-size:0.82rem;color:var(--text);display:flex;align-items:center;gap:6px;">` +
+      `Chunked Combined Queries <span style="font-weight:400;font-size:0.72rem;color:var(--text2);">&mdash; IN / OR batched queries (editable chunk size above)</span>` +
+      `</div>`;
+
+    for (const [type, values] of Object.entries(grouped)) {
+      const vals = values.slice(0, 50);
+      const typeLabel = typeNames[type] || type.toUpperCase();
+      const chunkFn = BULK_CHUNK[type];
+      if (!chunkFn) continue;
+
+      html +=
+        `<details class="bulk-detail"${vals.length <= 15 ? ' open' : ''}>` +
+        `<summary>${typeLabel} &mdash; <strong>${vals.length}</strong> IOC${vals.length !== 1 ? 's' : ''} &mdash; chunked by <span class="chunk-size-label">10</span></summary>` +
+        `<div class="detail-body" data-type="${type}">`;
+
+      for (const siem of siems) {
+        html +=
+          `<div style="font-weight:600;font-size:0.72rem;color:var(--accent);margin:10px 0 6px;display:flex;align-items:center;gap:6px;">` +
+          `<span class="badge ${siemBadge[siem]}" style="font-size:0.6rem;">${siemNames[siem]}</span> Chunked queries` +
+          `</div>`;
+
+        const chunks = chunkArray(vals, DEFAULT_CHUNK_SIZE);
+        for (let ci = 0; ci < chunks.length; ci++) {
+          const chunkQuery = chunkFn[siem](chunks[ci]);
+          html +=
+            `<div class="output-block" style="margin-bottom:6px;">` +
+            `<div class="output-label" style="font-size:0.65rem;">Chunk ${ci + 1}/${chunks.length} &mdash; ${chunks[ci].length} IOC${chunks[ci].length !== 1 ? 's' : ''}</div>` +
+            `<pre class="query-box" style="font-size:0.74rem;">${escapeHTML(chunkQuery)}<button class="copy-btn" data-query="${escapeHTML(chunkQuery)}">Copy</button></pre>` +
+            `</div>`;
+        }
+      }
+
+      html += `</div></details>`;
+    }
+
+    outputCtr.innerHTML = html;
+    attachCopyHandlers();
+
+    /* ── Chunk size change handler ─────── */
+    const chunkSelect = document.getElementById('chunkSizeSelect');
+    if (chunkSelect) {
+      chunkSelect.addEventListener('change', function () {
+        const newSize = parseInt(this.value, 10);
+        outputCtr.querySelectorAll('.chunk-size-label').forEach(el => { el.textContent = newSize; });
+        outputCtr.querySelectorAll('.detail-body[data-type]').forEach(body => {
+          const type = body.getAttribute('data-type');
+          const vals = grouped[type];
+          if (!vals) return;
+          const chunkFn = BULK_CHUNK[type];
+          if (!chunkFn) return;
+          const siems2 = getSelectedSIEMs();
+          const chunks = chunkArray(vals.slice(0, 50), newSize);
+
+          let newHTML = '';
+          for (const siem of siems2) {
+            newHTML +=
+              `<div style="font-weight:600;font-size:0.72rem;color:var(--accent);margin:10px 0 6px;display:flex;align-items:center;gap:6px;">` +
+              `<span class="badge ${siemBadge[siem]}" style="font-size:0.6rem;">${siemNames[siem]}</span> Chunked queries` +
+              `</div>`;
+            for (let ci = 0; ci < chunks.length; ci++) {
+              const chunkQuery = chunkFn[siem](chunks[ci]);
+              newHTML +=
+                `<div class="output-block" style="margin-bottom:6px;">` +
+                `<div class="output-label" style="font-size:0.65rem;">Chunk ${ci + 1}/${chunks.length} &mdash; ${chunks[ci].length} IOC${chunks[ci].length !== 1 ? 's' : ''}</div>` +
+                `<pre class="query-box" style="font-size:0.74rem;">${escapeHTML(chunkQuery)}<button class="copy-btn" data-query="${escapeHTML(chunkQuery)}">Copy</button></pre>` +
+                `</div>`;
+            }
+          }
+          body.innerHTML = newHTML;
+          attachCopyHandlers();
+        });
+      });
+    }
+  }
+
+  /* ── attach copy handlers ────────────── */
+  function attachCopyHandlers() {
+    outputCtr.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', function () {
+        const q = this.getAttribute('data-query');
+        copyToClipboard(q, this);
+      });
+    });
+  }
+
+  /* ═══════════════════════════════════════════
+     COPY
+     ═══════════════════════════════════════════ */
+
+  function copyToClipboard(text, btnEl) {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => flashCopy(btnEl)).catch(() => fallbackCopy(text, btnEl));
+      } else {
+        fallbackCopy(text, btnEl);
+      }
+    } catch (_) { fallbackCopy(text, btnEl); }
+  }
+
+  function fallbackCopy(text, btnEl) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); flashCopy(btnEl); } catch (_) { showToast('Copy failed'); }
+    document.body.removeChild(ta);
+  }
+
+  function flashCopy(btn) {
+    if (btn) {
+      btn.classList.add('copied');
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.classList.remove('copied'); btn.textContent = 'Copy'; }, 1800);
+    }
+    showToast('Query copied to clipboard');
+  }
+
+  /* ── safe localStorage wrapper ────────── */
+  function safeStorage(method, key, value) {
+    try {
+      if (method === 'get') return localStorage.getItem(key);
+      if (method === 'set') { localStorage.setItem(key, value); return true; }
+    } catch (_) { /* file:// or private mode may block localStorage */ }
+    return method === 'get' ? null : false;
+  }
+
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 2000);
+  }
+
+  /* ═══════════════════════════════════════════
+     THEME
+     ═══════════════════════════════════════════ */
+
+  function applyTheme(dark) {
+    htmlEl.setAttribute('data-theme', dark ? 'dark' : 'light');
+    themeLabel.textContent = dark ? 'Light Mode' : 'Dark Mode';
+    safeStorage('set', 'siem-qb-theme', dark ? 'dark' : 'light');
+  }
+
+  function toggleTheme() {
+    applyTheme(htmlEl.getAttribute('data-theme') !== 'dark');
+  }
+
+  (function initTheme() {
+    const saved = safeStorage('get', 'siem-qb-theme');
+    if (saved === 'dark' || saved === 'light') {
+      applyTheme(saved === 'dark');
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      applyTheme(true);
+    } else {
+      applyTheme(false);
+    }
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function (e) {
+      if (!safeStorage('get', 'siem-qb-theme')) applyTheme(e.matches);
+    });
+  })();
+
+  /* ═══════════════════════════════════════════
+     EVENT LISTENERS
+     ═══════════════════════════════════════════ */
+
+  themeBtn.addEventListener('click', toggleTheme);
+
+  /* Mode toggle */
+  modeTabs.forEach(tab => {
+    tab.addEventListener('click', function () {
+      modeTabs.forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      currentMode = this.getAttribute('data-mode');
+
+      if (currentMode === 'single') {
+        singleWrapper.classList.remove('hidden');
+        bulkWrapper.classList.add('hidden');
+        inputCardTitle.innerHTML = 'Step 3 &mdash; IOC Value';
+        iocTypeNote.classList.remove('hidden');
+      } else {
+        singleWrapper.classList.add('hidden');
+        bulkWrapper.classList.remove('hidden');
+        inputCardTitle.innerHTML = 'Step 3 &mdash; Bulk IOC Values &nbsp;<small style="font-weight:400;font-size:0.7rem;color:var(--text2);">(one per line, max 50)</small>';
+        iocTypeNote.classList.remove('hidden');
+      }
+      render();
+    });
+  });
+
+  /* IOC type radios */
+  iocRadios.forEach(r => r.addEventListener('change', function () {
+    currentIOC = this.value;
+    render();
+  }));
+
+  /* Set auto-detect as default */
+  document.getElementById('ioc-auto').checked = true;
+  currentIOC = 'auto';
+
+  /* SIEM checkboxes */
+  siemBoxes.forEach(cb => cb.addEventListener('change', render));
+
+  /* Single input */
+  iocValueEl.addEventListener('input', function () {
+    currentValue = this.value;
+    render();
+  });
+
+  /* Bulk textarea */
+  iocBulkEl.addEventListener('input', function () {
+    render();
+  });
+
+  /* ── File Upload ──────────────────────── */
+  const uploadArea   = document.getElementById('uploadArea');
+  const fileInput    = document.getElementById('iocFileInput');
+  const fileNameEl   = document.getElementById('fileName');
+  const uploadHint   = document.getElementById('uploadHint');
+  const uploadClear  = document.getElementById('uploadClear');
+
+  function parseCSV(text) {
+    const lines = text.split(/\r?\n/);
+    const iocs = [];
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+      // Split by comma — take the first non-empty value (handles multi-column CSVs)
+      const parts = trimmed.split(',').map(p => p.trim().replace(/^["']|["']$/g, ''));
+      const firstVal = parts.find(p => p.length > 0);
+      if (firstVal) iocs.push(firstVal);
+    }
+    return iocs;
+  }
+
+  function parseTXT(text) {
+    return text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+  }
+
+  function loadIOCsFromFile(file) {
+    if (!file) return;
+    const isCSV = file.name.toLowerCase().endsWith('.csv') || file.type === 'text/csv';
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      const text = e.target.result;
+      let iocs;
+      if (isCSV) {
+        iocs = parseCSV(text);
+      } else {
+        iocs = parseTXT(text);
+      }
+      // Cap at 50, populate textarea
+      const capped = iocs.slice(0, 50);
+      iocBulkEl.value = capped.join('\n');
+      // Update UI
+      fileNameEl.textContent = file.name;
+      fileNameEl.classList.remove('hidden');
+      uploadHint.classList.add('hidden');
+      uploadClear.classList.remove('hidden');
+      uploadArea.classList.add('dragover');
+      // Switch to bulk mode if not already
+      if (currentMode !== 'bulk') {
+        modeTabs.forEach(t => t.classList.remove('active'));
+        const bulkTab = document.querySelector('.mode-tab[data-mode="bulk"]');
+        if (bulkTab) bulkTab.classList.add('active');
+        currentMode = 'bulk';
+        singleWrapper.classList.add('hidden');
+        bulkWrapper.classList.remove('hidden');
+        inputCardTitle.innerHTML = 'Step 3 &mdash; Bulk IOC Values &nbsp;<small style="font-weight:400;font-size:0.7rem;color:var(--text2);">(one per line, max 50)</small>';
+        iocTypeNote.classList.remove('hidden');
+      }
+      render();
+      showToast(`Loaded ${capped.length} IOC${capped.length !== 1 ? 's' : ''} from ${file.name}`);
+    };
+    reader.readAsText(file);
+  }
+
+  fileInput.addEventListener('change', function () {
+    if (this.files && this.files[0]) {
+      loadIOCsFromFile(this.files[0]);
+    }
+  });
+
+  /* Drag and drop */
+  uploadArea.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.add('dragover');
+  });
+  uploadArea.addEventListener('dragleave', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.remove('dragover');
+  });
+  uploadArea.addEventListener('drop', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    this.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && (file.name.endsWith('.txt') || file.name.endsWith('.csv') ||
+        file.type === 'text/plain' || file.type === 'text/csv')) {
+      loadIOCsFromFile(file);
+    } else {
+      showToast('Please drop a .txt or .csv file');
+    }
+  });
+
+  /* Click on upload area triggers file input */
+  uploadArea.addEventListener('click', function (e) {
+    if (e.target !== fileInput && e.target !== uploadClear) {
+      fileInput.click();
+    }
+  });
+
+  /* Clear uploaded file */
+  uploadClear.addEventListener('click', function (e) {
+    e.stopPropagation();
+    fileInput.value = '';
+    iocBulkEl.value = '';
+    fileNameEl.classList.add('hidden');
+    fileNameEl.textContent = '';
+    uploadHint.classList.remove('hidden');
+    uploadClear.classList.add('hidden');
+    uploadArea.classList.remove('dragover');
+    render();
+    showToast('File cleared');
+  });
+
+  /* Copy All button */
+  copyAllBtn.addEventListener('click', function () {
+    const allQueries = [...outputCtr.querySelectorAll('.copy-btn')].map(b => b.getAttribute('data-query')).join('\n\n');
+    if (allQueries) {
+      copyToClipboard(allQueries, copyAllBtn);
+    } else {
+      showToast('No queries to copy');
+    }
+  });
+
+  /* Ctrl+Enter to copy all */
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      const allQueries = [...outputCtr.querySelectorAll('.copy-btn')].map(b => b.getAttribute('data-query')).join('\n\n');
+      if (allQueries) copyToClipboard(allQueries, null);
+    }
+  });
+
+  /* initial render */
+  render();
+
+})();
+</script>
+
+</body>
+</html>

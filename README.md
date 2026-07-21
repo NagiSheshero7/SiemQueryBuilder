@@ -1,0 +1,94 @@
+# SIEM Query Builder
+
+**Offline SIEM query builder for threat hunters, by a threat hunter.**
+
+A lightweight, browser-based tool that generates native SIEM queries from IOCs — no backend, no tracking, no data leaves your machine.
+
+![Platform](https://img.shields.io/badge/platform-web%20%7C%20offline-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![SIEMs](https://img.shields.io/badge/SIEMs-QRadar%20%7C%20Splunk%20%7C%20RSA%20NetWitness%20%7C%20Datadog%20%7C%20Wazuh-orange)
+
+## Features
+
+- **Single IOC Mode** — Enter one IOC and get formatted queries instantly
+- **Bulk IOC Mode** — Paste up to 50 IOCs (one per line) and generate queries in batches
+- **File Import** — Upload .txt or .csv files to auto-import IOCs (drag & drop or browse)
+- **Auto-Detect** — Automatically identifies IPs, domains, emails, SHA-1, SHA-256, and MD5 hashes
+- **Five SIEM Platforms** — IBM QRadar (AQL), Splunk (SPL), RSA NetWitness, Datadog SIEM, Wazuh
+- **Chunked Combined Queries** — Batch IOCs into `IN` / `OR` grouped queries with configurable chunk sizes
+- **Per-IOC Validation** — Color-coded validation table shows which IOCs are valid/invalid/unknown
+- **Individual + Combined Output** — Both individual per-IOC queries and chunked combined queries in one view
+- **Dark / Light Mode** — Full black + light green dark theme, clean light theme
+- **Copy to Clipboard** — One-click copy for individual queries, sections, or all queries at once
+- **Fully Offline** — Single HTML file with zero dependencies. No server, no telemetry, no network calls
+
+## Supported IOC Types
+
+| Type | Format | Example |
+|------|--------|---------|
+| IP Address | IPv4 / CIDR | `192.168.1.100`, `10.0.0.0/24` |
+| Domain / URL | FQDN or full URL | `evil.com`, `https://malware-c2.com/beacon` |
+| Email | Standard email | `user@evil.com` |
+| SHA-1 | 40 hex chars | `da39a3ee5e6b4b0d3255bfef95601890afd80709` |
+| SHA-256 | 64 hex chars | `e3b0c44298fc1c149afbf4c8996fb924...` |
+| MD5 | 32 hex chars | `d41d8cd98f00b204e9800998ecf8427e` |
+
+## Supported SIEM Platforms
+
+- **IBM QRadar** — AQL queries with event, flow, and category-based hunting
+- **Splunk** — SPL queries with `stats count by index, sourcetype` aggregation
+- **RSA NetWitness** — Native query syntax for packets, logs, and endpoint data
+- **Datadog SIEM** — Faceted log queries with `@attribute` syntax, service/source scoping
+- **Wazuh** — Lucene-based queries for Elasticsearch backend with rule level filtering
+
+## Usage
+
+### Method 1: Direct Open
+1. Download `index.html`
+2. Open it in any modern browser (Chrome, Firefox, Edge, Safari)
+3. Start building queries — nothing else needed
+
+### Method 2: Local Server (optional)
+```bash
+python3 -m http.server 8080
+# Then open http://localhost:8080
+```
+
+### Quick Start
+1. **Select mode** — Single IOC or Bulk IOCs
+2. **Choose IOC type** — or leave on Auto-Detect
+3. **Pick SIEM platforms** — QRadar, Splunk, RSA NetWitness, Datadog SIEM, Wazuh (any combination)
+4. **Enter your IOC(s)** — type, paste, or upload a .txt/.csv file — queries generate in real-time
+5. **Copy and hunt** — click Copy buttons or press `Ctrl+Enter` to copy all
+
+## Screenshots
+
+<!-- Add screenshots here after taking them -->
+<!-- ![Light Mode](screenshots/light-mode.png) -->
+<!-- ![Dark Mode](screenshots/dark-mode.png) -->
+<!-- ![Bulk Mode](screenshots/bulk-mode.png) -->
+
+## Why Offline?
+
+As a threat hunter, you often work with sensitive IOCs from active investigations. This tool:
+- Never sends your IOCs over the network
+- Runs entirely in your browser
+- Has no analytics, ads, or tracking
+- Can be used from an air-gapped workstation
+
+## Contributing
+
+Pull requests are welcome. Areas for contribution:
+
+- Additional SIEM platforms (Sentinel, Elastic, ArcSight, etc.)
+- New IOC types (CVE, registry keys, file paths, etc.)
+- Query template improvements and optimization
+- UI/UX enhancements
+
+## License
+
+MIT — see [LICENSE](LICENSE) file for details.
+
+## Author
+
+Built by [Hashir14k](https://github.com/Hashir14k) — for the threat hunting community.
