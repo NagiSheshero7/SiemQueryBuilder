@@ -1,4 +1,4 @@
-# SIEM Query Builder
+# SIEM Query Builder v1.5
 
 **Offline SIEM query builder for threat hunters, by a threat hunter.**
 
