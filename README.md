@@ -41,6 +41,10 @@ A lightweight, browser-based tool that generates native SIEM queries from IOCs �
 - **Datadog SIEM** — Faceted log queries with `@attribute` syntax, service/source scoping
 - **Wazuh** — Lucene-based queries for Elasticsearch backend with rule level filtering
 
+## Documentation
+
+See the **[User Manual](USER_MANUAL.md)** for a complete guide covering all features, SIEM syntax details, workflows, and troubleshooting.
+
 ## Usage
 
 ### Method 1: Direct Open

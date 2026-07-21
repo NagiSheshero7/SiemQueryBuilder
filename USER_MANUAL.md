@@ -1,0 +1,361 @@
+# SIEM Query Builder — User Manual
+
+> **Version 1.0** | Fully offline · No telemetry · No data leaves your machine
+
+---
+
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Getting Started](#getting-started)
+3. [Interface Walkthrough](#interface-walkthrough)
+4. [Single IOC Mode](#single-ioc-mode)
+5. [Bulk IOC Mode](#bulk-ioc-mode)
+6. [File Import (.txt / .csv)](#file-import-txt--csv)
+7. [IOC Types & Auto-Detect](#ioc-types--auto-detect)
+8. [SIEM Platforms & Query Syntax](#siem-platforms--query-syntax)
+9. [Copying Queries](#copying-queries)
+10. [Dark / Light Theme](#dark--light-theme)
+11. [Keyboard Shortcuts](#keyboard-shortcuts)
+12. [Tips & Best Practices](#tips--best-practices)
+13. [Troubleshooting](#troubleshooting)
+
+---
+
+## Overview
+
+The **SIEM Query Builder** is a browser-based tool that generates native SIEM queries from Indicators of Compromise (IOCs). It's built for threat hunters, incident responders, and SOC analysts who need to pivot quickly across multiple SIEM platforms.
+
+**Key capabilities:**
+- Generate queries for **5 SIEM platforms**
+- Support for **6 IOC types** with auto-detection
+- **Single IOC** mode for quick lookups
+- **Bulk IOC** mode for hunting at scale (up to 50 IOCs)
+- **File import** from `.txt` and `.csv` files
+- **Chunked combined queries** for efficient batch hunting
+- **Per-IOC validation** with color-coded feedback
+- **Dark / Light theme** — full black + green dark mode
+- **Zero dependencies** — single HTML file, works offline
+
+---
+
+## Getting Started
+
+### Method 1: Direct Open (Recommended)
+1. Download `index.html` from the repository
+2. Double-click it — opens in your default browser
+3. Start building queries immediately
+
+### Method 2: Local Server
+```bash
+python3 -m http.server 8080
+# Open http://localhost:8080 in your browser
+```
+
+### System Requirements
+- Any modern browser: Chrome 90+, Firefox 90+, Edge 90+, Safari 14+
+- No server, database, or internet connection required
+- Works on Windows, macOS, and Linux
+
+---
+
+## Interface Walkthrough
+
+The tool is organized into **4 steps**, displayed as cards from top to bottom:
+
+```
+┌─────────────────────────────────────────┐
+│  Step 1 — Mode & IOC Type               │
+│  [Single IOC] [Bulk IOCs (up to 50)]    │
+│  [Auto-Detect] [IP] [Email] [Domain]... │
+├─────────────────────────────────────────┤
+│  Step 2 — SIEM Platform                 │
+│  [IBM QRadar] [Splunk] [RSA] ...        │
+├─────────────────────────────────────────┤
+│  Step 3 — IOC Value                     │
+│  [Input field or textarea]              │
+├─────────────────────────────────────────┤
+│  Step 4 — Generated Queries             │
+│  [Query output with copy buttons]       │
+└─────────────────────────────────────────┘
+```
+
+Queries regenerate **instantly** as you type, select options, or change settings — no "Generate" button needed.
+
+---
+
+## Single IOC Mode
+
+Best for quick one-off lookups during an investigation.
+
+### Steps:
+1. **Select "Single IOC"** tab at the top of Step 1
+2. **Choose IOC type** (or leave on Auto-Detect)
+3. **Pick SIEM platforms** — check one or more (e.g., QRadar + Splunk)
+4. **Enter the IOC** in the input field — the query appears in Step 4 instantly
+
+### Example:
+| Input | Auto-Detected As | Output |
+|-------|-----------------|--------|
+| `192.168.1.100` | IP | QRadar AQL, Splunk SPL, etc. |
+| `user@evil.com` | Email | Mail-focused queries for each SIEM |
+| `d41d8cd98f00b204e9800998ecf8427e` | MD5 | Hash-based hunting queries |
+
+### Validation Feedback:
+- **Green text** — IOC is valid and ready
+- **Red text** — format doesn't match the selected type
+- **Auto-Detect result** — shows what type was detected
+
+---
+
+## Bulk IOC Mode
+
+Best for threat intelligence feeds, multiple IOCs from a report, or batch hunting.
+
+### Steps:
+1. **Select "Bulk IOCs"** tab
+2. **Choose IOC type** — Auto-Detect is recommended for mixed IOCs
+3. **Pick SIEM platforms**
+4. **Paste IOCs** — one per line, up to 50
+5. Review the validation table and generated queries
+
+### Validation Table:
+A color-coded table appears below the textarea showing each IOC:
+
+| # | Value | Status | Detected Type |
+|---|-------|--------|---------------|
+| 1 | `192.168.1.100` | 🟢 OK | IP |
+| 2 | `not-an-ioc` | 🔴 Invalid | ??? |
+| 3 | `evil.com` | 🟡 Unknown | ??? |
+
+- **Green dot** — valid IOC
+- **Yellow dot** — unknown (select a type manually or use Auto-Detect)
+- **Red dot** — invalid format
+
+### Output Sections:
+
+#### Individual Queries
+One set of queries per IOC, organized by type and SIEM. Expandable `<details>` sections keep the output organized.
+
+#### Chunked Combined Queries
+IOCs of the same type are batched together using `IN` / `OR` operators:
+- Adjustable **chunk size** (5, 10, 15, 25, or all 50)
+- Each chunk generates one combined query per SIEM
+- Useful for running fewer, broader queries instead of many individual ones
+
+---
+
+## File Import (.txt / .csv)
+
+Instead of pasting, you can import IOCs directly from a file.
+
+### Supported Formats:
+
+| Format | Description |
+|--------|-------------|
+| `.txt` | One IOC per line |
+| `.csv` | Comma-separated — first column used as IOC value |
+
+### CSV Handling:
+- Multi-column CSVs: the tool extracts the **first non-empty value** from each row
+- Values wrapped in quotes (`"192.168.1.100"`) are automatically cleaned
+- Header rows are treated as values — **remove headers before importing** or delete them from the textarea after import
+
+### How to Import:
+1. Switch to **Bulk IOCs** mode (or the tool will switch automatically)
+2. **Drag & drop** a `.txt` or `.csv` file onto the upload area
+   — OR —
+   Click **"Browse Files"** to select a file
+3. IOCs are automatically parsed and populated
+4. Review the validation table
+5. A toast notification confirms how many IOCs were loaded
+
+### After Import:
+- You can still **edit** the textarea — add, remove, or fix IOCs
+- Click **"Remove"** to clear the file and start over
+- Max **50 IOCs** are imported (automatically capped)
+
+---
+
+## IOC Types & Auto-Detect
+
+### Supported Types:
+
+| Type | Format | Example | Pattern |
+|------|--------|---------|---------|
+| **IP Address** | IPv4 / CIDR | `192.168.1.100`, `10.0.0.0/24` | `x.x.x.x` with optional `/yy` |
+| **Domain / URL** | FQDN or full URL | `evil.com`, `https://malware-c2.com/path` | Contains TLD |
+| **Email** | Standard email address | `user@evil.com` | `name@domain.tld` |
+| **MD5** | 32 hex characters | `d41d8cd98f00b204e9800998ecf8427e` | `[a-f0-9]{32}` |
+| **SHA-1** | 40 hex characters | `da39a3ee5e6b4b0d3255bfef95601890afd80709` | `[a-f0-9]{40}` |
+| **SHA-256** | 64 hex characters | `e3b0c44298fc1c149afbf4c8996fb...` | `[a-f0-9]{64}` |
+
+### Auto-Detect Mode:
+- **On by default** — the tool guesses the IOC type from the value
+- Best for **Bulk mode** with mixed IOC types
+- If detection fails, manually select a type from the chips
+- Detection priority: SHA-256 → SHA-1 → MD5 → IP → Email → Domain
+
+### Manual Type Selection:
+- Click any IOC type chip to force a specific type
+- The tool validates all IOCs against the selected type's pattern
+- Invalid IOCs show as **red** in the validation table
+
+---
+
+## SIEM Platforms & Query Syntax
+
+### IBM QRadar
+**Syntax:** AQL (Ariel Query Language)
+
+Queries use `SELECT * FROM events WHERE ...` patterns with optional `LAST N DAYS` time windows. Includes separate queries for:
+- Event data (`events` table)
+- Flow data (`flows` table)
+- Category-based filtering (mail category 16000, FIM category 7000, etc.)
+- Payload search for deep inspection
+
+### Splunk
+**Syntax:** SPL (Search Processing Language)
+
+Queries use `index=*` with field-based filters and `stats count by` aggregation. Output is sorted by count descending. Includes:
+- Field-mapped searches (`src_ip`, `dest_ip`, `file_hash`, etc.)
+- `stats count by index, sourcetype` for quick pivoting
+- Pipe-chained commands for result refinement
+
+### RSA NetWitness
+**Syntax:** Native NetWitness query language
+
+Queries use logical operators (`||` for OR) with specific attribute references. Includes:
+- `ip.src`, `ip.dst` for IP hunting
+- `file.hash`, `checksum` for hash lookups
+- `alias.host`, `web.domain`, `dns.hostname` for domain/URL
+- `mail.src`, `mail.dst` for email investigation
+
+### Datadog SIEM
+**Syntax:** Faceted log queries with `@attribute` notation
+
+Queries target specific log attributes using the `@` prefix. Includes:
+- `@src.ip`, `@dst.ip`, `@network.client.ip` for IP
+- `@email`, `@usr.email`, `@mail.from`, `@mail.to` for email
+- `@dns.question`, `@http.url`, `@http.host` for domain/URL
+- `@file.hash`, `@file.hash.sha256` for hash lookups
+- Service-scoped queries (`service:firewall`, `service:endpoint`, etc.)
+
+### Wazuh
+**Syntax:** Lucene / Elasticsearch field-based queries
+
+Queries use field-based syntax compatible with the Wazuh indexer. Includes:
+- `data.srcip`, `data.dstip` for IP with rule level filtering
+- `data.email`, `email`, `mail.from`, `mail.to` for email
+- `data.url`, `data.domain`, `url`, `domain` for domain/URL
+- `file.hash`, `hash`, `sha256`, `md5` for hash lookups
+- `rule.level>=10` for high-fidelity alert scoping
+- `location:firewall`, `location:syscheck` for log source filtering
+
+---
+
+## Copying Queries
+
+### Individual Copy
+- Hover over any query box — a **"Copy"** button appears in the top-right corner
+- Click to copy that specific query
+- The button briefly shows **"Copied!"** on success
+
+### Copy All
+- Click the **"Copy All"** button in the Step 4 header
+- Copies all generated queries from all SIEMs at once
+- Queries are separated by blank lines for easy pasting
+
+### Keyboard Shortcut
+- **`Ctrl + Enter`** (Windows/Linux) or **`Cmd + Enter`** (macOS)
+- Copies all generated queries at once — fastest workflow for hunters
+
+---
+
+## Dark / Light Theme
+
+The theme toggle button is in the top-right corner of the header.
+
+| Theme | Background | Accent | Best For |
+|-------|-----------|--------|----------|
+| **Light** | White/gray | Blue | Daytime, well-lit environments |
+| **Dark** | Pure black (`#000`) | Light green | Late-night hunting, reducing eye strain |
+
+- Your preference is saved to **localStorage** and persists across sessions
+- If no preference is saved, the tool follows your **OS-level theme** setting
+- All colors, borders, shadows, and code blocks adapt to the selected theme
+
+---
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl + Enter` / `Cmd + Enter` | Copy all generated queries |
+| `Tab` / `Shift + Tab` | Navigate between form elements |
+
+---
+
+## Tips & Best Practices
+
+### Query Efficiency
+- **Use Chunked Queries** for large batches — running 1 query of 10 IOCs is faster than 10 individual queries
+- **Adjust chunk size** based on your SIEM's query limits — start with 10 and increase if your platform supports it
+- **Select only the SIEMs you need** — generating queries for all 5 when you only use Splunk creates unnecessary output
+
+### IOC Hygiene
+- **Deduplicate before pasting** — the tool doesn't deduplicate IOCs
+- **Validate manually** — auto-detection is pattern-based; a valid-looking IP could still be benign
+- **Remove headers from CSVs** before importing
+
+### Hunting Workflow
+1. Start with **Auto-Detect** to understand what types of IOCs you have
+2. Switch to a **specific type** for validation and cleaner output
+3. Use **Chunked Combined Queries** for the actual hunt
+4. Copy individual queries when you need to tune or share a specific search
+
+### Security
+- The tool runs **entirely in your browser** — no IOC ever leaves your machine
+- Safe to use on **air-gapped** workstations
+- No cookies, analytics, or tracking of any kind
+- Verify queries before running them in production SIEM
+
+---
+
+## Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| **Queries not appearing** | Check that at least one SIEM platform is selected and the IOC is valid |
+| **"Could not detect IOC type"** | Select the IOC type manually by clicking one of the type chips |
+| **Too many invalid IOCs** | Check for extra spaces, quotes, or non-standard formats in your input |
+| **File won't import** | Ensure it's `.txt` or `.csv` — other formats are not supported |
+| **CSV import picks wrong column** | Reorder your CSV so the IOC column is first, or paste directly into the textarea |
+| **Dark mode not saving** | Check that localStorage is not blocked (some private/incognito modes restrict it) |
+| **Copy not working** | Older browsers may not support the Clipboard API — try `Ctrl+C` on the query text instead |
+| **Page looks broken** | Clear browser cache, ensure JavaScript is enabled, use a modern browser |
+
+---
+
+## Repository Structure
+
+```
+siem-query-builder/
+├── index.html      # The tool (open this in your browser)
+├── README.md       # Project overview and feature list
+├── USER_MANUAL.md  # This guide
+├── LICENSE         # MIT License
+└── .gitignore
+```
+
+---
+
+## Feedback & Contributions
+
+Found a bug? Have a feature request? Want to add another SIEM platform?
+
+- Open an issue on GitHub
+- Submit a pull request
+- Share with the threat hunting community
+
+Built by [Hashir14k](https://github.com/Hashir14k) — for hunters, by a hunter.
