@@ -7,18 +7,20 @@ A lightweight, browser-based tool that generates native SIEM queries from IOCs �
 ![Platform](https://img.shields.io/badge/platform-web%20%7C%20offline-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![SIEMs](https://img.shields.io/badge/SIEMs-QRadar%20%7C%20Splunk%20%7C%20RSA%20NetWitness%20%7C%20Datadog%20%7C%20Wazuh-orange)
-![Version](https://img.shields.io/badge/version-1.5-informational)
+![Version](https://img.shields.io/badge/version-1.7-informational)
 ![PWA](https://img.shields.io/badge/PWA-ready-success)
 
 ## Features
 
 - **Single IOC Mode** — Enter one IOC and get formatted queries instantly
-- **Bulk IOC Mode** — Paste up to 50 IOCs (one per line) and generate queries in batches
+- **Bulk IOC Mode** — Paste up to 200 IOCs (one per line) with auto-deduplication and generate queries in batches
 - **File Import** — Upload .txt or .csv files to auto-import IOCs (drag & drop or browse)
 - **Auto-Detect** — Automatically identifies IPs, domains, emails, SHA-1, SHA-256, and MD5 hashes
 - **Five SIEM Platforms** — IBM QRadar (AQL), Splunk (SPL), RSA NetWitness, Datadog SIEM, Wazuh
 - **Chunked Combined Queries** — Batch IOCs into `IN` / `OR` grouped queries with configurable chunk sizes
 - **Per-IOC Validation** — Color-coded validation table shows which IOCs are valid/invalid/unknown
+- **Auto-Deduplication** — Case-insensitive duplicate detection skips repeated IOCs and reports the count
+- **Debounced Rendering** — Bulk input waits 300ms after typing before regenerating queries for smooth performance
 - **Individual + Combined Output** — Both individual per-IOC queries and chunked combined queries in one view
 - **Built-in Cheat Sheet** — In-page search query syntax reference for all 5 SIEM platforms with platform dropdown
 - **Typewriter Animation** — "SIEM Query Builder" heading types itself out on every visit

@@ -689,7 +689,7 @@ details.bulk-detail .detail-body {
       <span>Select IOC Nature</span>
       <div class="mode-tabs" id="modeTabs">
         <button class="mode-tab active" data-mode="single">Single IOC</button>
-        <button class="mode-tab" data-mode="bulk">Bulk IOCs &nbsp;<small style="font-weight:400;opacity:.7">(up to 50)</small></button>
+        <button class="mode-tab" data-mode="bulk">Bulk IOCs &nbsp;<small style="font-weight:400;opacity:.7">(up to 200)</small></button>
       </div>
     </div>
     <div class="ioc-type-row" id="iocTypeRow">
@@ -763,12 +763,12 @@ details.bulk-detail .detail-body {
       </div>
       <textarea
         class="ioc-textarea" id="iocBulkValue"
-        placeholder="Paste up to 50 IOCs — one per line...&#10;&#10;192.168.1.100&#10;10.0.0.0/24&#10;user@evil.com&#10;https://malware-c2.com/beacon&#10;d41d8cd98f00b204e9800998ecf8427e&#10;da39a3ee5e6b4b0d3255bfef95601890afd80709&#10;e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        placeholder="Paste up to 200 IOCs — one per line...&#10;&#10;192.168.1.100&#10;10.0.0.0/24&#10;user@evil.com&#10;https://malware-c2.com/beacon&#10;d41d8cd98f00b204e9800998ecf8427e&#10;da39a3ee5e6b4b0d3255bfef95601890afd80709&#10;e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
         autocomplete="off" spellcheck="false"
       ></textarea>
       <div class="bulk-meta">
         <div>
-          <span class="bulk-counter" id="bulkCounter">0 / 50</span>
+          <span class="bulk-counter" id="bulkCounter">0 / 200</span>
           <span style="margin-left:6px;" id="bulkHint">Paste one IOC per line.</span>
         </div>
         <div class="bulk-stats" id="bulkStats">
@@ -1177,10 +1177,15 @@ details.bulk-detail .detail-body {
   function parseBulkLines(raw) {
     const lines = raw.split(/\r?\n/);
     const results = [];
+    const seen = new Set();
+    let dupes = 0;
     for (let i = 0; i < lines.length; i++) {
       const text = lines[i].trim();
       if (!text) continue;
-      if (results.length >= 50) break;
+      if (results.length >= 200) break;
+      const key = text.toLowerCase();
+      if (seen.has(key)) { dupes++; continue; }
+      seen.add(key);
       const detected = detectIOCType(text);
       const effective = currentIOC === 'auto' ? (detected || 'unknown') : currentIOC;
       const valid = effective !== 'unknown' && VALIDATORS[effective] && VALIDATORS[effective].rx.test(text);
@@ -1192,7 +1197,7 @@ details.bulk-detail .detail-body {
         valid,
       });
     }
-    return results;
+    return { results: results, dupes: dupes };
   }
 
   
@@ -1271,13 +1276,15 @@ details.bulk-detail .detail-body {
   
   function renderBulk() {
     const raw = iocBulkEl.value;
-    const lines = parseBulkLines(raw);
+    const parsed = parseBulkLines(raw);
+    const lines = parsed.results;
+    const dupes = parsed.dupes;
     lastBulkLines = lines;
 
-    
+
     const cnt = lines.length;
-    bulkCounter.textContent = `${cnt} / 50`;
-    bulkCounter.className = 'bulk-counter' + (cnt > 50 ? ' over' : '');
+    bulkCounter.textContent = `${cnt} / 200`;
+    bulkCounter.className = 'bulk-counter' + (cnt > 200 ? ' over' : '');
 
     
     const validOnes   = lines.filter(l => l.valid);
@@ -1294,11 +1301,12 @@ details.bulk-detail .detail-body {
     
     if (cnt === 0) {
       bulkHint.textContent = 'Paste one IOC per line.';
-    } else if (cnt > 50) {
-      bulkHint.innerHTML = `<strong>${cnt}</strong> lines &mdash; only first 50 will be used.`;
+    } else if (cnt > 200) {
+      bulkHint.innerHTML = `<strong>${cnt}</strong> lines &mdash; only first 200 will be used.`;
       bulkHint.style.color = 'var(--danger)';
     } else {
-      bulkHint.innerHTML = `<strong>${cnt}</strong> IOC${cnt !== 1 ? 's' : ''} parsed &mdash; <strong>${validOnes.length}</strong> valid.`;
+      var dupeNote = dupes > 0 ? ` &mdash; <strong>${dupes}</strong> duplicate${dupes !== 1 ? 's' : ''} skipped` : '';
+      bulkHint.innerHTML = `<strong>${cnt}</strong> IOC${cnt !== 1 ? 's' : ''} parsed &mdash; <strong>${validOnes.length}</strong> valid${dupeNote}.`;
       bulkHint.style.color = '';
     }
 
@@ -1356,7 +1364,7 @@ details.bulk-detail .detail-body {
       `<span style="display:flex;align-items:center;gap:6px;color:var(--text2);">` +
       `Chunk size: ` +
       `<select id="chunkSizeSelect" style="padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:0.78rem;cursor:pointer;">` +
-      `<option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="25">25</option><option value="50">All (50)</option>` +
+      `<option value="5">5</option><option value="10" selected>10</option><option value="15">15</option><option value="25">25</option><option value="200">All (200)</option>` +
       `</select>` +
       `</span>` +
       `</div>`;
@@ -1368,7 +1376,7 @@ details.bulk-detail .detail-body {
       `</div>`;
 
     for (const [type, values] of Object.entries(grouped)) {
-      const vals = values.slice(0, 50);
+      const vals = values.slice(0, 200);
       const typeLabel = typeNames[type] || type.toUpperCase();
 
       html +=
@@ -1401,7 +1409,7 @@ details.bulk-detail .detail-body {
       `</div>`;
 
     for (const [type, values] of Object.entries(grouped)) {
-      const vals = values.slice(0, 50);
+      const vals = values.slice(0, 200);
       const typeLabel = typeNames[type] || type.toUpperCase();
       const chunkFn = BULK_CHUNK[type];
       if (!chunkFn) continue;
@@ -1447,7 +1455,7 @@ details.bulk-detail .detail-body {
           const chunkFn = BULK_CHUNK[type];
           if (!chunkFn) return;
           const siems2 = getSelectedSIEMs();
-          const chunks = chunkArray(vals.slice(0, 50), newSize);
+          const chunks = chunkArray(vals.slice(0, 200), newSize);
 
           let newHTML = '';
           for (const siem of siems2) {
@@ -1600,7 +1608,7 @@ details.bulk-detail .detail-body {
       } else {
         singleWrapper.classList.add('hidden');
         bulkWrapper.classList.remove('hidden');
-        inputCardTitle.innerHTML = 'Add Bulk IOC Values &nbsp;<small style="font-weight:400;font-size:0.7rem;color:var(--text2);">(one per line, max 50)</small>';
+        inputCardTitle.innerHTML = 'Add Bulk IOC Values &nbsp;<small style="font-weight:400;font-size:0.7rem;color:var(--text2);">(one per line, max 200)</small>';
         iocTypeNote.classList.remove('hidden');
       }
       render();
@@ -1627,8 +1635,10 @@ details.bulk-detail .detail-body {
   });
 
   
+  var bulkDebounceTimer = null;
   iocBulkEl.addEventListener('input', function () {
-    render();
+    clearTimeout(bulkDebounceTimer);
+    bulkDebounceTimer = setTimeout(render, 300);
   });
 
   
@@ -1669,7 +1679,7 @@ details.bulk-detail .detail-body {
         iocs = parseTXT(text);
       }
       
-      const capped = iocs.slice(0, 50);
+      const capped = iocs.slice(0, 200);
       iocBulkEl.value = capped.join('\n');
       
       fileNameEl.textContent = file.name;
@@ -1685,7 +1695,7 @@ details.bulk-detail .detail-body {
         currentMode = 'bulk';
         singleWrapper.classList.add('hidden');
         bulkWrapper.classList.remove('hidden');
-        inputCardTitle.innerHTML = 'Add Bulk IOC Values &nbsp;<small style="font-weight:400;font-size:0.7rem;color:var(--text2);">(one per line, max 50)</small>';
+        inputCardTitle.innerHTML = 'Add Bulk IOC Values &nbsp;<small style="font-weight:400;font-size:0.7rem;color:var(--text2);">(one per line, max 200)</small>';
         iocTypeNote.classList.remove('hidden');
       }
       render();

@@ -1,6 +1,6 @@
 # SIEM Query Builder — User Manual
 
-> **Version 2.0** | Fully offline · No telemetry · No data leaves your machine
+> **Version 2.1** | Fully offline · No telemetry · No data leaves your machine
 
 ---
 
@@ -32,7 +32,7 @@ The **SIEM Query Builder** is a browser-based tool that generates native SIEM qu
 - Generate queries for **5 SIEM platforms**
 - Support for **6 IOC types** with auto-detection
 - **Single IOC** mode for quick lookups
-- **Bulk IOC** mode for hunting at scale (up to 50 IOCs)
+- **Bulk IOC** mode for hunting at scale (up to 200 IOCs)
 - **File import** from `.txt` and `.csv` files
 - **Chunked combined queries** for efficient batch hunting
 - **Per-IOC validation** with color-coded feedback
@@ -74,7 +74,7 @@ The tool is organized into **4 step cards** displayed vertically:
 │  SIEM Query Builder    [Dark Mode] [Cheat Sheet]  │  ← Header (always visible)
 ├─────────────────────────────────────────┤
 │  Select IOC Nature                      │
-│  [Single IOC] [Bulk IOCs (up to 50)]    │
+│  [Single IOC] [Bulk IOCs (up to 200)]    │
 │  [Auto-Detect] [IP] [Email] [Domain]... │
 ├─────────────────────────────────────────┤
 │  Select SIEM Platform                    │
@@ -129,7 +129,7 @@ Best for threat intelligence feeds, multiple IOCs from a report, or batch huntin
 1. **Select "Bulk IOCs"** tab
 2. **Choose IOC type** — Auto-Detect is recommended for mixed IOCs
 3. **Pick SIEM platforms**
-4. **Paste IOCs** — one per line, up to 50
+4. **Paste IOCs** — one per line, up to 200
 5. Review the validation table and generated queries
 
 ### Validation Table:
@@ -144,6 +144,21 @@ A color-coded table appears below the textarea showing each IOC:
 - **Green dot** — valid IOC
 - **Yellow dot** — unknown (select a type manually or use Auto-Detect)
 - **Red dot** — invalid format
+
+### Auto-Deduplication
+
+Duplicate IOCs are automatically detected and skipped:
+- **Case-insensitive** — `EVIL.COM` and `evil.com` are treated as the same IOC
+- **First occurrence kept** — the first instance is used, all subsequent duplicates are dropped
+- **Duplicate count shown** — the hint line reports how many duplicates were skipped
+- Duplicates do NOT count toward the 200-IOC limit
+
+### Debounced Rendering
+
+To keep the tool smooth while typing large batches:
+- Bulk input waits **300ms** after the last keystroke before regenerating queries
+- File import, mode switching, and SIEM selection still render instantly
+- No sluggishness even at the 200-IOC maximum
 
 ### Output Sections:
 
@@ -370,7 +385,7 @@ The tool still works perfectly without installation — just open `index.html` d
 - Use the threat hunting examples as templates — copy, paste, and customize
 
 ### IOC Hygiene
-- **Deduplicate before pasting** — the tool doesn't deduplicate IOCs
+- **Deduplication is automatic** — the tool skips case-insensitive duplicates and reports the count
 - **Validate manually** — auto-detection is pattern-based; a valid-looking IP could still be benign
 - **Remove headers from CSVs** before importing
 
@@ -401,6 +416,8 @@ The tool still works perfectly without installation — just open `index.html` d
 | **Dark mode not saving** | Check that localStorage is not blocked (some private/incognito modes restrict it) |
 | **Copy not working** | Older browsers may not support the Clipboard API — try `Ctrl+C` on the query text instead |
 | **Cheat Sheet not loading** | Ensure the HTML file is intact — the cheat sheet is built into the same file |
+| **Queries not updating while typing** | Bulk mode uses a 300ms debounce — queries regenerate when you stop typing. This is normal. |
+| **IOCs missing from output** | Check for duplicates — the tool skips duplicate IOCs (case-insensitive). The hint line shows how many were skipped. |
 | **PWA install not showing** | Must be served via HTTP — `python3 -m http.server 8080` then open `localhost:8080` |
 | **Page looks broken** | Clear browser cache, ensure JavaScript is enabled, use a modern browser |
 
