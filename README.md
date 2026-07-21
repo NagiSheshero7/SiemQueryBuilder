@@ -7,6 +7,8 @@ A lightweight, browser-based tool that generates native SIEM queries from IOCs �
 ![Platform](https://img.shields.io/badge/platform-web%20%7C%20offline-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![SIEMs](https://img.shields.io/badge/SIEMs-QRadar%20%7C%20Splunk%20%7C%20RSA%20NetWitness%20%7C%20Datadog%20%7C%20Wazuh-orange)
+![Version](https://img.shields.io/badge/version-1.5-informational)
+![PWA](https://img.shields.io/badge/PWA-ready-success)
 
 ## Features
 
@@ -18,7 +20,10 @@ A lightweight, browser-based tool that generates native SIEM queries from IOCs �
 - **Chunked Combined Queries** — Batch IOCs into `IN` / `OR` grouped queries with configurable chunk sizes
 - **Per-IOC Validation** — Color-coded validation table shows which IOCs are valid/invalid/unknown
 - **Individual + Combined Output** — Both individual per-IOC queries and chunked combined queries in one view
-- **Dark / Light Mode** — Full black + light green dark theme, clean light theme
+- **Built-in Cheat Sheet** — In-page search query syntax reference for all 5 SIEM platforms with platform dropdown
+- **Typewriter Animation** — "SIEM Query Builder" heading types itself out on every visit
+- **Dark / Light Mode** — Full black + light green dark theme (default), clean light theme
+- **PWA Support** — Installable on desktop and mobile for a native app experience
 - **Copy to Clipboard** — One-click copy for individual queries, sections, or all queries at once
 - **Fully Offline** — Single HTML file with zero dependencies. No server, no telemetry, no network calls
 
@@ -43,7 +48,7 @@ A lightweight, browser-based tool that generates native SIEM queries from IOCs �
 
 ## Documentation
 
-See the **[User Manual](USER_MANUAL.md)** for a complete guide covering all features, SIEM syntax details, workflows, and troubleshooting.
+See the **[User Manual](USER_MANUAL.md)** for a complete guide covering all features, SIEM syntax details, the built-in Cheat Sheet, PWA install instructions, workflows, and troubleshooting.
 
 ## Usage
 
@@ -52,11 +57,12 @@ See the **[User Manual](USER_MANUAL.md)** for a complete guide covering all feat
 2. Open it in any modern browser (Chrome, Firefox, Edge, Safari)
 3. Start building queries — nothing else needed
 
-### Method 2: Local Server (optional)
+### Method 2: Local Server (PWA-enabled)
 ```bash
 python3 -m http.server 8080
 # Then open http://localhost:8080
 ```
+Serving via HTTP enables the PWA install prompt and service worker caching.
 
 ### Quick Start
 1. **Select mode** — Single IOC or Bulk IOCs
@@ -64,13 +70,7 @@ python3 -m http.server 8080
 3. **Pick SIEM platforms** — QRadar, Splunk, RSA NetWitness, Datadog SIEM, Wazuh (any combination)
 4. **Enter your IOC(s)** — type, paste, or upload a .txt/.csv file — queries generate in real-time
 5. **Copy and hunt** — click Copy buttons or press `Ctrl+Enter` to copy all
-
-## Screenshots
-
-<!-- Add screenshots here after taking them -->
-<!-- ![Light Mode](screenshots/light-mode.png) -->
-<!-- ![Dark Mode](screenshots/dark-mode.png) -->
-<!-- ![Bulk Mode](screenshots/bulk-mode.png) -->
+6. **Cheat Sheet** — click the Cheat Sheet button in the header for search query syntax reference
 
 ## Why Offline?
 
@@ -87,6 +87,7 @@ Pull requests are welcome. Areas for contribution:
 - Additional SIEM platforms (Sentinel, Elastic, ArcSight, etc.)
 - New IOC types (CVE, registry keys, file paths, etc.)
 - Query template improvements and optimization
+- Cheat Sheet expansions and additional hunting recipes
 - UI/UX enhancements
 
 ## License

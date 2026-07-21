@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="Offline SIEM query builder for threat hunters — generate native queries for QRadar, Splunk, RSA NetWitness, Datadog, and Wazuh.">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23000' stroke='%234ade80' stroke-width='1.5'/><text x='16' y='14' text-anchor='middle' font-family='Consolas,monospace' font-size='8' font-weight='bold' fill='%234ade80'>SIEM</text><text x='16' y='22' text-anchor='middle' font-family='Consolas,monospace' font-size='5.5' font-weight='bold' fill='%234ade80'>QB</text></svg>">
 <title>SIEM Query Builder — QRadar · Splunk · RSA NetWitness</title>
 <style>
 :root {
@@ -116,10 +120,26 @@ body::after {
   margin-bottom: 24px;
 }
 .header h1 {
+  font-family: "Consolas", "Courier New", monospace;
   font-size: 1.55rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text);
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 2px solid var(--accent);
+  display: inline-block;
+  width: 18ch;
+}
+
+/* Caret blink */
+@keyframes blink-caret {
+  0%, 100% { border-color: var(--accent); }
+  50% { border-color: transparent; }
+}
+.header h1.typing {
+  border-right: 2px solid var(--accent);
+  animation: blink-caret 0.6s step-end infinite;
 }
 .theme-btn {
   background: var(--surface);
@@ -555,6 +575,80 @@ details.bulk-detail .detail-body {
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* Cheat Sheet Page (in-page, not modal) */
+.cs-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow), var(--glow);
+  transition: background var(--transition), border var(--transition), box-shadow var(--transition);
+}
+.cs-card .card-title {
+  font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em;
+  font-weight: 700; color: var(--text2); margin-bottom: 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 8px;
+}
+
+.cs-select-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+.cs-select-row label {
+  font-size: 0.78rem; font-weight: 600; color: var(--text2);
+  text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+}
+.cs-select {
+  padding: 7px 12px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface2);
+  color: var(--text); font-size: 0.84rem; cursor: pointer;
+  font-family: "Inter","Segoe UI",sans-serif;
+  outline: none; transition: all var(--transition);
+}
+.cs-select:focus { border-color: var(--accent); }
+
+.cs-section { margin-bottom: 18px; }
+.cs-section:last-child { margin-bottom: 0; }
+.cs-section-title {
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em;
+  font-weight: 700; color: var(--accent); margin-bottom: 8px;
+  padding-bottom: 5px; border-bottom: 1px solid var(--border);
+}
+.cs-table {
+  width: 100%; border-collapse: collapse; font-size: 0.76rem;
+}
+.cs-table th {
+  text-align: left; font-weight: 600; color: var(--text2);
+  padding: 5px 8px; border-bottom: 1px solid var(--border);
+  font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.cs-table td {
+  padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,.04);
+  vertical-align: top; line-height: 1.5;
+}
+.cs-table tr:hover td { background: var(--surface2); }
+.cs-table code {
+  font-family: "JetBrains Mono","Cascadia Code","Fira Code",monospace;
+  font-size: 0.72rem; color: var(--accent); background: var(--code-bg);
+  padding: 1px 5px; border-radius: 3px; word-break: break-word;
+}
+.cs-block {
+  font-family: "JetBrains Mono","Cascadia Code","Fira Code",monospace;
+  font-size: 0.7rem; color: var(--accent2); background: var(--code-bg);
+  padding: 6px 10px; border-radius: 4px; border-left: 3px solid var(--accent);
+  margin: 4px 0; white-space: pre-wrap; word-break: break-word;
+  overflow-wrap: break-word; line-height: 1.5; overflow-x: auto;
+}
+.cs-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+@media (max-width: 600px) {
+  .cs-card { padding: 14px 12px; }
+  .cs-table { font-size: 0.7rem; }
+  .cs-table code, .cs-block { font-size: 0.64rem; }
+}
+
 .hidden { display: none !important; }
 .mt-2 { margin-top: 10px; }
 
@@ -577,15 +671,22 @@ details.bulk-detail .detail-body {
   
   <div class="header">
     <h1>SIEM Query Builder</h1>
-    <button class="theme-btn" id="themeToggle" title="Toggle dark / light mode" aria-label="Toggle theme">
-      <span id="themeLabel">Dark Mode</span>
-    </button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button class="theme-btn" id="themeToggle" title="Toggle dark / light mode" aria-label="Toggle theme">
+        <span id="themeLabel">Dark Mode</span>
+      </button>
+      <a class="theme-btn" id="cheatSheetLink" title="Open Cheat Sheet" style="text-decoration:none;">
+        Cheat Sheet
+      </a>
+    </div>
   </div>
 
-  
+<div id="mainPage">
+
+
   <div class="card">
     <div class="card-title">
-      <span>Step 1 &mdash; Mode &amp; IOC Type</span>
+      <span>Select IOC Nature</span>
       <div class="mode-tabs" id="modeTabs">
         <button class="mode-tab active" data-mode="single">Single IOC</button>
         <button class="mode-tab" data-mode="bulk">Bulk IOCs &nbsp;<small style="font-weight:400;opacity:.7">(up to 50)</small></button>
@@ -610,7 +711,7 @@ details.bulk-detail .detail-body {
 
   
   <div class="card">
-    <div class="card-title">Step 2 &mdash; SIEM Platform</div>
+    <div class="card-title">Select SIEM Platform</div>
     <div class="siem-row" id="siemRow">
       <div class="siem-chip">
         <input type="checkbox" id="siem-qradar" value="qradar">
@@ -637,7 +738,7 @@ details.bulk-detail .detail-body {
 
   
   <div class="card" id="inputCard">
-    <div class="card-title" id="inputCardTitle">Step 3 &mdash; IOC Value</div>
+    <div class="card-title" id="inputCardTitle">Add IOC Value</div>
 
     
     <div id="singleInputWrapper">
@@ -689,7 +790,7 @@ details.bulk-detail .detail-body {
   
   <div class="card" id="outputCard">
     <div class="card-title">
-      <span>Step 4 &mdash; Generated Queries</span>
+      <span>Generated Queries</span>
       <button class="copy-btn" id="copyAllBtn" style="position:static;opacity:1;font-size:0.72rem;padding:5px 12px;" title="Copy all queries at once">
         Copy All
       </button>
@@ -701,14 +802,36 @@ details.bulk-detail .detail-body {
     </div>
   </div>
 
-  
+
   <div style="text-align:center;padding:12px 0 4px;font-size:0.7rem;color:var(--text2);opacity:0.6;">
     Built by <strong>Hashir14k</strong> &mdash; offline SIEM query builder for hunters, by a hunter.
   </div>
 
-</div>
+</div><!-- /mainPage -->
 
 <div class="toast" id="toast"></div>
+
+<!-- Cheat Sheet Page -->
+<div id="csPage" class="hidden">
+  <div class="cs-card">
+    <div class="card-title">
+      <span>Search Query Cheat Sheets</span>
+    </div>
+    <div class="cs-select-row">
+      <label for="csPlatform">Platform:</label>
+      <select class="cs-select" id="csPlatform">
+        <option value="qradar">IBM QRadar (AQL)</option>
+        <option value="splunk">Splunk (SPL)</option>
+        <option value="rsa">RSA NetWitness</option>
+        <option value="datadog">Datadog SIEM</option>
+        <option value="wazuh">Wazuh</option>
+      </select>
+    </div>
+    <div id="csBody"></div>
+  </div>
+</div>
+
+</div><!-- /container -->
 
 <script>
 (function () {
@@ -1429,6 +1552,35 @@ details.bulk-detail .detail-body {
     });
   })();
 
+  /* --- Typewriter animation (continuous loop) --- */
+  (function initTypewriter() {
+    var h1 = document.querySelector('.header h1');
+    if (!h1) return;
+    var fullText = h1.textContent;
+    var i = 0;
+    var typingSpeed = 90;   // ms per character
+    var pauseAfter = 2000;  // pause after typing complete
+    var pauseBefore = 600;  // pause before starting next cycle
+
+    function typeChar() {
+      if (i <= fullText.length) {
+        h1.textContent = fullText.slice(0, i);
+        i++;
+        setTimeout(typeChar, typingSpeed);
+      } else {
+        // Full text shown — pause, then clear and restart
+        setTimeout(function() {
+          h1.textContent = '';
+          i = 0;
+          setTimeout(typeChar, pauseBefore);
+        }, pauseAfter);
+      }
+    }
+
+    h1.classList.add('typing');
+    typeChar();
+  })();
+
   
 
   themeBtn.addEventListener('click', toggleTheme);
@@ -1443,12 +1595,12 @@ details.bulk-detail .detail-body {
       if (currentMode === 'single') {
         singleWrapper.classList.remove('hidden');
         bulkWrapper.classList.add('hidden');
-        inputCardTitle.innerHTML = 'Step 3 &mdash; IOC Value';
+        inputCardTitle.innerHTML = 'Add IOC Value';
         iocTypeNote.classList.remove('hidden');
       } else {
         singleWrapper.classList.add('hidden');
         bulkWrapper.classList.remove('hidden');
-        inputCardTitle.innerHTML = 'Step 3 &mdash; Bulk IOC Values &nbsp;<small style="font-weight:400;font-size:0.7rem;color:var(--text2);">(one per line, max 50)</small>';
+        inputCardTitle.innerHTML = 'Add Bulk IOC Values &nbsp;<small style="font-weight:400;font-size:0.7rem;color:var(--text2);">(one per line, max 50)</small>';
         iocTypeNote.classList.remove('hidden');
       }
       render();
@@ -1533,7 +1685,7 @@ details.bulk-detail .detail-body {
         currentMode = 'bulk';
         singleWrapper.classList.add('hidden');
         bulkWrapper.classList.remove('hidden');
-        inputCardTitle.innerHTML = 'Step 3 &mdash; Bulk IOC Values &nbsp;<small style="font-weight:400;font-size:0.7rem;color:var(--text2);">(one per line, max 50)</small>';
+        inputCardTitle.innerHTML = 'Add Bulk IOC Values &nbsp;<small style="font-weight:400;font-size:0.7rem;color:var(--text2);">(one per line, max 50)</small>';
         iocTypeNote.classList.remove('hidden');
       }
       render();
@@ -1615,8 +1767,378 @@ details.bulk-detail .detail-body {
   
   render();
 
+  /* --- Cheat Sheet Page --- */
+  var mainPage  = document.getElementById('mainPage');
+  var csPage    = document.getElementById('csPage');
+  var csBody    = document.getElementById('csBody');
+  var csSelect  = document.getElementById('csPlatform');
+  var csLink    = document.getElementById('cheatSheetLink');
+  var csOpen    = false;
+
+  function escHTML(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function csBlock(code) {
+    return '<div class="cs-block">' + escHTML(code) + '</div>';
+  }
+
+  function csTable(headers, rows) {
+    var h = '<div class="cs-scroll"><table class="cs-table"><thead><tr>';
+    headers.forEach(function(th){ h += '<th>' + th + '</th>'; });
+    h += '</tr></thead><tbody>';
+    rows.forEach(function(row){
+      h += '<tr>';
+      row.forEach(function(td){ h += '<td>' + td + '</td>'; });
+      h += '</tr>';
+    });
+    h += '</tbody></table></div>';
+    return h;
+  }
+
+  function csSection(title, content) {
+    return '<div class="cs-section"><div class="cs-section-title">' + title + '</div>' + content + '</div>';
+  }
+
+  var CHEATS = {};
+
+  /* --- QRadar --- */
+  CHEATS.qradar = function(){
+    var h = '';
+    h += csSection('Basic AQL Structure', csBlock('SELECT <fields> FROM events\nWHERE <condition>\nLAST <N> DAYS/HOURS/MINUTES'));
+    h += csSection('Tables',
+      csTable(['Table','Use'], [
+        ['<code>events</code>','Event/flow log data'],
+        ['<code>flows</code>','Network flow data'],
+        ['<code>GLOBALVIEW</code>','Cross-database search']
+      ]));
+    h += csSection('Comparison Operators',
+      csTable(['Operator','Meaning','Example'], [
+        ['<code>=</code>','Equals','<code>sourceip = \'10.0.0.1\'</code>'],
+        ['<code>!=</code> / <code>&lt;&gt;</code>','Not equals','<code>username != \'admin\'</code>'],
+        ['<code>&gt;</code> / <code>&gt;=</code>','Greater than / or equal','<code>magnitude &gt;= 8</code>'],
+        ['<code>&lt;</code> / <code>&lt;=</code>','Less than / or equal','<code>eventcount &lt;= 100</code>'],
+        ['<code>IN (v1, v2, ...)</code>','Value in list','<code>sourceip IN (\'10.0.0.1\',\'10.0.0.2\')</code>'],
+        ['<code>NOT IN (...)</code>','Value NOT in list','<code>username NOT IN (\'root\',\'admin\')</code>'],
+        ['<code>BETWEEN x AND y</code>','Range match','<code>magnitude BETWEEN 5 AND 9</code>'],
+        ['<code>IS NULL</code> / <code>IS NOT NULL</code>','Null check','<code>username IS NULL</code>']
+      ]));
+    h += csSection('String Matching',
+      csTable(['Operator','Description','Example'], [
+        ['<code>LIKE</code>','Wildcard match (<code>%</code> = any, <code>_</code> = single char)','<code>url LIKE \'%evil.com%\'</code>'],
+        ['<code>NOT LIKE</code>','Negative wildcard','<code>url NOT LIKE \'%cdn%\'</code>'],
+        ['<code>MATCHES</code>','Regex match','<code>filepath MATCHES \'.*\\\\.(exe|dll)$\'</code>'],
+        ['<code>ILIKE</code> / <code>IMATCHES</code>','Case-insensitive variants','<code>username ILIKE \'%admin%\'</code>']
+      ]));
+    h += csSection('String Functions',
+      csTable(['Function','Purpose','Example'], [
+        ['<code>LOWER(str)</code>','Lowercase','<code>LOWER(username) LIKE \'%admin%\'</code>'],
+        ['<code>UPPER(str)</code>','Uppercase','<code>UPPER(domainname)</code>'],
+        ['<code>LENGTH(str)</code>','String length','<code>LENGTH(payload) &gt; 1000</code>'],
+        ['<code>CONCAT(a,b,...)</code>','Concatenate','<code>CONCAT(srcip,\':\',dstip)</code>'],
+        ['<code>SUBSTRING(str,start,len)</code>','Extract substring','<code>SUBSTRING(filehash,1,8)</code>'],
+        ['<code>STRPOS(str,sub)</code>','Find position of substring','<code>STRPOS(url,\'cmd\') &gt; 0</code>'],
+        ['<code>REPLACE(str,old,new)</code>','Replace substring','<code>REPLACE(url,\'http:\',\'hxxp:\')</code>']
+      ]));
+    h += csSection('Time & Date',
+      csTable(['Syntax','Meaning'], [
+        ['<code>LAST 1 HOURS</code>','Events from the last hour'],
+        ['<code>LAST 24 HOURS</code>','Events from the last 24 hours'],
+        ['<code>LAST 7 DAYS</code>','Events from the last 7 days'],
+        ['<code>LAST 30 MINUTES</code>','Events from the last 30 minutes'],
+        ['<code>START \'2026-07-01 00:00:00\' STOP \'2026-07-21 23:59:59\'</code>','Absolute time range'],
+        ['<code>DATEFORMAT(sourceip,starttime,\'yyyy-MM-dd HH:mm\')</code>','Date formatting'],
+        ['<code>NOW()</code>','Current timestamp']
+      ]));
+    h += csSection('Aggregation',
+      csTable(['Function','Purpose'], [
+        ['<code>COUNT(*)</code> / <code>COUNT(field)</code>','Row count'],
+        ['<code>COUNT(DISTINCT field)</code>','Unique value count'],
+        ['<code>SUM(field)</code>','Sum of numeric field'],
+        ['<code>AVG(field)</code>','Average'],
+        ['<code>MIN(field)</code> / <code>MAX(field)</code>','Min / max value'],
+        ['<code>GROUP BY field1, field2</code>','Group aggregation results'],
+        ['<code>HAVING COUNT(*) &gt; 10</code>','Filter aggregated results']
+      ]));
+    h += csSection('Logical Operators',
+      csTable(['Operator','Usage'], [
+        ['<code>AND</code>','All conditions must match'],
+        ['<code>OR</code>','At least one condition must match'],
+        ['<code>NOT (condition)</code>','Negate a condition'],
+        ['<code>(a OR b) AND c</code>','Group with parentheses']
+      ]));
+    h += csSection('Sorting & Limiting',
+      csTable(['Clause','Example'], [
+        ['<code>ORDER BY field ASC</code> / <code>DESC</code>','<code>ORDER BY magnitude DESC</code>'],
+        ['<code>LIMIT N</code>','<code>LIMIT 100</code>'],
+        ['<code>LIMIT N OFFSET M</code>','<code>LIMIT 50 OFFSET 100</code>']
+      ]));
+    h += csSection('Threat Hunting Examples',
+      csBlock('-- IP IOC hunt\nSELECT * FROM events\nWHERE (sourceip = \'10.0.0.1\' OR destinationip = \'10.0.0.1\')\nLAST 7 DAYS\n\n-- Hash hunt with payload\nSELECT * FROM events\nWHERE filehash = \'d41d8cd98f00b204e9800998ecf8427e\'\nOR payload LIKE \'%d41d8cd98f00b204e9800998ecf8427e%\'\nLAST 30 DAYS\n\n-- Beacon detection (repeated connections)\nSELECT sourceip, destinationip, COUNT(*) AS cnt\nFROM flows\nGROUP BY sourceip, destinationip\nHAVING COUNT(*) > 50\nLAST 24 HOURS\nORDER BY cnt DESC\n\n-- Suspicious process via payload\nSELECT * FROM events\nWHERE category = 8000\nAND payload MATCHES \'.*(cmd\\.exe|powershell|wmic).*\'\nLAST 7 DAYS'));
+    return h;
+  };
+
+  /* --- Splunk --- */
+  CHEATS.splunk = function(){
+    var h = '';
+    h += csSection('Search Basics',
+      csTable(['Pattern','Description'], [
+        ['<code>index=* sourcetype=xyz</code>','Scope to index and sourcetype'],
+        ['<code>keyword1 keyword2</code>','Implicit AND — both keywords must match'],
+        ['<code>keyword1 OR keyword2</code>','Boolean OR'],
+        ['<code>NOT keyword</code>','Exclude events matching keyword'],
+        ['<code>"exact phrase"</code>','Exact phrase match'],
+        ['<code>field=value</code>','Field-value pair'],
+        ['<code>field!=value</code>','Field NOT equal to value'],
+        ['<code>field&gt;=N</code> / <code>field&lt;=N</code>','Numeric comparison'],
+        ['<code>field IN (v1, v2)</code>','Field value in list'],
+        ['<code>field=*</code>','Field exists (has any value)'],
+        ['<code>field!=*</code>','Field is null / missing']
+      ]));
+    h += csSection('Time Modifiers',
+      csTable(['Syntax','Meaning'], [
+        ['<code>earliest=-7d latest=now</code>','Last 7 days'],
+        ['<code>earliest=-24h@h</code>','Snap to start of the hour'],
+        ['<code>earliest=-30m latest=now</code>','Last 30 minutes'],
+        ['<code>earliest=@d</code>','Start of today'],
+        ['<code>earliest=@mon</code>','Start of this month'],
+        ['<code>earliest=06/01/2026:00:00:00</code>','Absolute time']
+      ]));
+    h += csSection('Core Pipe Commands',
+      csTable(['Command','Purpose','Example'], [
+        ['<code>stats</code>','Aggregate','<code>stats count BY src_ip</code>'],
+        ['<code>eval</code>','Calculate / transform','<code>eval risk=round(bytes/1048576,2)</code>'],
+        ['<code>table</code>','Display columns','<code>table src_ip, dest_ip, count</code>'],
+        ['<code>sort</code>','Sort results','<code>sort - count, + src_ip</code>'],
+        ['<code>dedup</code>','Deduplicate','<code>dedup src_ip</code>'],
+        ['<code>head / tail</code>','First/last N results','<code>head 50</code>'],
+        ['<code>rename</code>','Rename field','<code>rename _time AS timestamp</code>'],
+        ['<code>fields</code>','Keep/remove fields','<code>fields src_ip, dest_ip</code>'],
+        ['<code>where</code>','Filter by expression','<code>where count &gt; 10 AND src_ip!="10.0.0.1"</code>'],
+        ['<code>lookup</code>','Enrich from CSV','<code>lookup bad_ips ip AS src_ip</code>'],
+        ['<code>rex</code>','Regex extract','<code>rex "src=(?&lt;ip&gt;\d+\.\d+\.\d+\.\d+)"</code>'],
+        ['<code>regex</code>','Regex filter','<code>regex url="\.(exe|dll|scr)$"</code>'],
+        ['<code>bin</code>','Bucket time','<code>bin _time span=5m</code>'],
+        ['<code>transaction</code>','Group into sessions','<code>transaction src_ip maxspan=5m</code>'],
+        ['<code>join</code>','SQL-style join','<code>join type=inner src_ip [subsearch]</code>'],
+        ['<code>append / appendcols</code>','Combine results','<code>append [search ...]</code>']
+      ]));
+    h += csSection('stats Functions',
+      csTable(['Function','Returns'], [
+        ['<code>count</code>','Number of events'],
+        ['<code>dc(field)</code>','Distinct count'],
+        ['<code>sum(field)</code>','Sum of values'],
+        ['<code>avg(field)</code>','Average'],
+        ['<code>min(field)</code> / <code>max(field)</code>','Min / max'],
+        ['<code>values(field)</code>','Distinct values (multi-value)'],
+        ['<code>list(field)</code>','Ordered list of all values'],
+        ['<code>earliest(field)</code> / <code>latest(field)</code>','First / last chronologically'],
+        ['<code>percXX(field)</code>','Percentile (e.g. <code>perc95</code>)'],
+        ['<code>stdev(field)</code>','Standard deviation']
+      ]));
+    h += csSection('eval Functions',
+      csTable(['Function','Purpose','Example'], [
+        ['<code>if(cond,true,false)</code>','Conditional','<code>if(risk&gt;80,"high","low")</code>'],
+        ['<code>case(c1,v1,c2,v2,...)</code>','Multi-condition','<code>case(score&gt;90,"A",score&gt;70,"B")</code>'],
+        ['<code>like(field,"pattern")</code>','Pattern match','<code>like(url,"%evil%")</code>'],
+        ['<code>cidrmatch("cidr",ip)</code>','CIDR check','<code>cidrmatch("10.0.0.0/8",src_ip)</code>'],
+        ['<code>match(field,regex)</code>','Regex match','<code>match(url,"\.exe$")</code>'],
+        ['<code>len(field)</code>','String length','<code>len(query)&gt;50</code>'],
+        ['<code>lower(field)</code> / <code>upper(field)</code>','Case change','<code>lower(user)</code>'],
+        ['<code>split(field,"delim")</code>','Split into multi-value','<code>split(email,"@")</code>'],
+        ['<code>mvindex(mv,N)</code>','Index into multi-value','<code>mvindex(split(email,"@"),1)</code>'],
+        ['<code>now()</code>','Current Unix timestamp','<code>eval age=now()-_time</code>'],
+        ['<code>relative_time(t,spec)</code>','Time arithmetic','<code>relative_time(now(),"-7d")</code>'],
+        ['<code>round(n,p)</code>','Round to p decimals','<code>round(bytes/1MB,2)</code>'],
+        ['<code>coalesce(f1,f2,...)</code>','First non-null','<code>coalesce(user,"N/A")</code>'],
+        ['<code>tostring(f,"commas")</code>','Format number','<code>tostring(bytes,"commas")</code>']
+      ]));
+    h += csSection('Subsearch Pattern',
+      csBlock('index=firewall [search index=threat_intel | table ip]\n-- Inner search feeds into outer filter as implicit OR\n\nindex=endpoint\n| lookup high_risk.csv user AS username OUTPUT risk_level\n| where risk_level="critical"'));
+    return h;
+  };
+
+  /* --- RSA NetWitness --- */
+  CHEATS.rsa = function(){
+    var h = '';
+    h += csSection('Query Syntax Basics',
+      csBlock('-- Logical OR operator\nip.src = 10.0.0.1 || ip.dst = 10.0.0.1\n\n-- Logical AND (implicit between terms)\nip.src = 10.0.0.1 tcp.port = 443\n\n-- Explicit AND\nip.src = 10.0.0.1 && tcp.port = 443'));
+    h += csSection('Operators',
+      csTable(['Operator','Meaning','Example'], [
+        ['<code>=</code>','Equals','<code>ip.src = 10.0.0.1</code>'],
+        ['<code>!=</code>','Not equals','<code>service != 80</code>'],
+        ['<code>||</code>','OR','<code>ip.src = 10.1.1.1 || ip.dst = 10.1.1.1</code>'],
+        ['<code>&&</code>','AND (optional)','<code>ip.src = 1.1.1.1 && tcp.port = 25</code>'],
+        ['<code>IN [ v1, v2, ... ]</code>','Value in list','<code>file.hash IN [ \'abc\', \'def\' ]</code>'],
+        ['<code>&gt;</code> / <code>&lt;</code>','Greater / less','<code>risk.score &gt; 80</code>']
+      ]));
+    h += csSection('Key Threat Hunting Attributes',
+      csTable(['Category','Attributes'], [
+        ['IP','<code>ip.src</code> <code>ip.dst</code> <code>ip.addr</code> <code>alias.ip</code> <code>alias.host</code>'],
+        ['Port','<code>tcp.port</code> <code>udp.port</code> <code>service</code>'],
+        ['Domain / URL','<code>alias.host</code> <code>web.domain</code> <code>dns.hostname</code> <code>web.page</code> <code>url</code>'],
+        ['Email','<code>mail.src</code> <code>mail.dst</code> <code>mail.addr</code> <code>mail.subject</code>'],
+        ['File / Hash','<code>file.hash</code> <code>file.name</code> <code>file.path</code> <code>checksum</code> <code>checksum.sha256</code> <code>checksum.md5</code>'],
+        ['User / Auth','<code>user.src</code> <code>user.dst</code> <code>user.name</code> <code>logon.type</code>'],
+        ['Process','<code>process.name</code> <code>process.id</code> <code>process.path</code>'],
+        ['Network','<code>eth.src</code> <code>eth.dst</code> <code>direction</code> <code>packet.length</code>']
+      ]));
+    h += csSection('Session-Based Hunting',
+      csTable(['Attribute','Use'], [
+        ['<code>sessionid</code>','Group events by session'],
+        ['<code>time</code>','Event timestamp'],
+        ['<code>event.time</code>','Event time filter'],
+        ['<code>risk.info</code>','Risk / alert metadata'],
+        ['<code>risk.suspicious</code>','Suspicious event flag'],
+        ['<code>threat.source</code>','Threat intel match source'],
+        ['<code>threat.category</code>','Threat category']
+      ]));
+    h += csSection('Threat Hunting Examples',
+      csBlock('-- IP IOC hunt\nip.src = 10.0.0.1 || ip.dst = 10.0.0.1 || alias.ip = 10.0.0.1\n\n-- Hash hunt\nfile.hash = \'d41d8cd98f00b204e9800998ecf8427e\' || checksum = \'d41d8cd98f00b204e9800998ecf8427e\'\n\n-- Suspicious domain C2\nweb.domain = \'evil.com\' || dns.hostname = \'evil.com\'\n\n-- Phishing email\nmail.src = \'bad@evil.com\' || mail.dst = \'bad@evil.com\'\n\n-- Beacon pattern (repeated small connections)\ndirection = \'outbound\' && risk.suspicious = \'high\'\n\n-- LOLBin process execution\nprocess.name IN [ \'cmd.exe\', \'powershell.exe\', \'wmic.exe\', \'mshta.exe\' ]'));
+    return h;
+  };
+
+  /* --- Datadog SIEM --- */
+  CHEATS.datadog = function(){
+    var h = '';
+    h += csSection('Search Syntax',
+      csBlock('-- Faceted search using @attribute notation\n@src.ip:10.0.0.1\n\n-- Multiple attributes combined\n@src.ip:10.0.0.1 OR @dst.ip:10.0.0.1\n\n-- Service scope\nservice:firewall @src.ip:10.0.0.1\n\n-- Source scope\nsource:o365 @usr.email:*evil.com*'));
+    h += csSection('Operators',
+      csTable(['Operator','Meaning','Example'], [
+        ['<code>:</code>','Field contains value','<code>@src.ip:10.0.0.1</code>'],
+        ['<code>OR</code>','Either condition','<code>@src.ip:1.1.1.1 OR @dst.ip:2.2.2.2</code>'],
+        ['<code>AND</code>','Both must match','<code>service:firewall AND @src.ip:10.0.0.1</code>'],
+        ['<code>-</code> (prefix)','Exclude / NOT','<code>-@src.ip:10.0.0.1</code>'],
+        ['<code>*</code>','Wildcard (prefix/suffix/contains)','<code>@email:*evil.com*</code>'],
+        ['<code>&gt;</code> / <code>&gt;=</code>','Greater than','<code>@network.bytes:&gt;1000000</code>'],
+        ['<code>&lt;</code> / <code>&lt;=</code>','Less than','<code>@duration:&lt;100</code>'],
+        ['<code>"phrase"</code>','Exact phrase','<code>"failed login"</code>'],
+        ['<code>()</code>','Grouping','<code>(@src.ip:1.1.1.1 OR @src.ip:2.2.2.2) AND service:firewall</code>']
+      ]));
+    h += csSection('Key Threat Hunting Attributes',
+      csTable(['Category','Attributes'], [
+        ['IP','<code>@src.ip</code> <code>@dst.ip</code> <code>@network.client.ip</code> <code>@network.destination.ip</code> <code>@network.ip</code>'],
+        ['Domain / URL','<code>@dns.question</code> <code>@http.url</code> <code>@http.host</code> <code>@network.client.domain</code> <code>@url</code>'],
+        ['Email','<code>@email</code> <code>@usr.email</code> <code>@mail.from</code> <code>@mail.to</code> <code>@mail.subject</code>'],
+        ['File / Hash','<code>@file.hash</code> <code>@file.hash.md5</code> <code>@file.hash.sha1</code> <code>@file.hash.sha256</code> <code>@file.name</code> <code>@file.path</code>'],
+        ['User','<code>@usr.name</code> <code>@usr.id</code> <code>@actor</code>'],
+        ['Process','<code>@process.name</code> <code>@process.executable</code> <code>@process.command_line</code>'],
+        ['Network','<code>@network.bytes</code> <code>@network.protocol</code> <code>@network.direction</code> <code>@network.transport</code>'],
+        ['Event','<code>@evt.name</code> <code>@evt.outcome</code> <code>@evt.category</code>']
+      ]));
+    h += csSection('Service & Source Scoping',
+      csTable(['Scope','Example'], [
+        ['<code>service:</code>','<code>service:firewall</code> <code>service:endpoint</code> <code>service:dns</code> <code>service:email</code> <code>service:ids</code> <code>service:proxy</code> <code>service:vpn</code> <code>service:cloudtrail</code>'],
+        ['<code>source:</code>','<code>source:o365</code> <code>source:gsuite</code> <code>source:aws</code> <code>source:azure</code> <code>source:carbonblack</code> <code>source:crowdstrike</code> <code>source:sentinelone</code> <code>source:threat_intel</code>'],
+        ['<code>status:</code>','<code>status:error</code> <code>status:warning</code> <code>status:info</code>'],
+        ['<code>host:</code>','<code>host:web-server-01</code>'],
+        ['<code>env:</code>','<code>env:production</code> <code>env:staging</code>']
+      ]));
+    h += csSection('Threat Hunting Examples',
+      csBlock('-- IP IOC hunt\n@src.ip:10.0.0.1 OR @dst.ip:10.0.0.1 OR @network.client.ip:10.0.0.1\n\n-- Firewall scoped\nservice:firewall (@src.ip:10.0.0.1 OR @dst.ip:10.0.0.1)\n\n-- Hash hunt (endpoint)\nservice:endpoint @file.hash.sha256:e3b0c44298fc1c149afbf4c8996fb924\n\n-- Malicious domain in DNS\nservice:dns @dns.question:*evil.com*\n\n-- Phishing email from O365\nsource:o365 @mail.from:*evil.com*\n\n-- Suspicious powershell\nservice:endpoint @process.name:powershell.exe @process.command_line:*DownloadString*\n\n-- Lateral movement\nservice:endpoint @evt.name:Network*Logon @evt.outcome:success\n\n-- Threat intel matches\nsource:threat_intel @file.hash:*'));
+    return h;
+  };
+
+  /* --- Wazuh --- */
+  CHEATS.wazuh = function(){
+    var h = '';
+    h += csSection('Lucene Query Syntax',
+      csBlock('-- Field-based search (Elasticsearch underneath)\ndata.srcip:10.0.0.1\n\n-- Free-text search (searches all fields)\n"powershell download"\n\n-- Multiple fields\n(data.srcip:10.0.0.1 OR data.dstip:10.0.0.1)'));
+    h += csSection('Operators',
+      csTable(['Operator','Meaning','Example'], [
+        ['<code>:</code>','Field contains value','<code>data.srcip:10.0.0.1</code>'],
+        ['<code>AND</code>','Both must match','<code>data.srcip:10.0.0.1 AND rule.level&gt;=10</code>'],
+        ['<code>OR</code>','Either must match','<code>data.srcip:1.1.1.1 OR data.srcip:2.2.2.2</code>'],
+        ['<code>NOT</code>','Exclude','<code>data.srcip:10.0.0.1 NOT location:trusted</code>'],
+        ['<code>-</code> (prefix)','Exclude (alt syntax)','<code>-location:trusted</code>'],
+        ['<code>*</code>','Multi-char wildcard','<code>data.url:*evil*</code>'],
+        ['<code>?</code>','Single-char wildcard','<code>file.name:report_2026_??.pdf</code>'],
+        ['<code>[min TO max]</code>','Inclusive range','<code>rule.level:[10 TO 15]</code>'],
+        ['<code>{min TO max}</code>','Exclusive range','<code>timestamp:{now-7d TO now}</code>'],
+        ['<code>~N</code>','Fuzzy match (edit distance)','<code>data.domain:googel~2</code>'],
+        ['<code>/regex/</code>','Regex match','<code>file.path:/.*\\\\.exe$/</code>'],
+        ['<code>"phrase"~N</code>','Proximity search','<code>"malware download"~5</code>']
+      ]));
+    h += csSection('Key Threat Hunting Fields',
+      csTable(['Category','Fields'], [
+        ['IP','<code>data.srcip</code> <code>data.dstip</code> <code>srcip</code> <code>dstip</code> <code>data.srcport</code> <code>data.dstport</code>'],
+        ['Domain / URL','<code>data.url</code> <code>data.domain</code> <code>url</code> <code>domain</code> <code>hostname</code>'],
+        ['Email','<code>data.email</code> <code>email</code> <code>mail.from</code> <code>mail.to</code> <code>mail.subject</code>'],
+        ['File / Hash','<code>file.hash</code> <code>hash</code> <code>sha256</code> <code>sha1</code> <code>md5</code> <code>file.name</code> <code>file.path</code>'],
+        ['User / Auth','<code>data.srcuser</code> <code>data.dstuser</code> <code>user</code> <code>data.uid</code>'],
+        ['Process','<code>data.processname</code> <code>proc.name</code> <code>data.cmdline</code>'],
+        ['Location','<code>location</code> — e.g., <code>firewall</code>, <code>syscheck</code>, <code>ossec</code>, <code>web</code>, <code>mail</code>'],
+        ['Rule','<code>rule.id</code> <code>rule.level</code> <code>rule.description</code> <code>rule.groups</code> <code>rule.mitre.id</code>'],
+        ['Agent','<code>agent.name</code> <code>agent.id</code> <code>agent.ip</code>']
+      ]));
+    h += csSection('Rule-Level Filtering',
+      csTable(['Level','Meaning'], [
+        ['<code>rule.level&gt;=0</code>','All events (including ignored)'],
+        ['<code>rule.level&gt;=3</code>','Low severity and above'],
+        ['<code>rule.level&gt;=7</code>','Medium severity and above'],
+        ['<code>rule.level&gt;=10</code>','High severity alerts'],
+        ['<code>rule.level&gt;=12</code>','Critical alerts (FIM, malware, exploits)'],
+        ['<code>rule.level&gt;=15</code>','Maximum severity'],
+        ['<code>rule.mitre.id:*T1059*</code>','MITRE ATT&CK technique filter']
+      ]));
+    h += csSection('Location-Based Scoping',
+      csTable(['Location','What It Covers'], [
+        ['<code>location:firewall</code>','Firewall / network logs'],
+        ['<code>location:syscheck</code>','File integrity monitoring (FIM)'],
+        ['<code>location:ossec</code>','Host-based IDS alerts'],
+        ['<code>location:web</code>','Web server logs'],
+        ['<code>location:mail</code>','Mail server / MTA logs'],
+        ['<code>location:auth</code>','Authentication events'],
+        ['<code>location:ids</code>','Network IDS events']
+      ]));
+    h += csSection('Threat Hunting Examples',
+      csBlock('-- IP IOC hunt\n(data.srcip:10.0.0.1 OR data.dstip:10.0.0.1 OR srcip:10.0.0.1 OR dstip:10.0.0.1)\n\n-- With rule level filter (high+ only)\nrule.level&gt;=10 AND (data.srcip:10.0.0.1 OR data.dstip:10.0.0.1)\n\n-- Hash hunt with FIM scope\nlocation:syscheck AND (sha256:e3b0c44298fc1c149afbf4c8996fb924 OR file.hash:e3b0c44298fc1c149afbf4c8996fb924)\n\n-- Malicious domain in proxy\nlocation:firewall AND (data.url:*evil.com* OR data.domain:evil.com)\n\n-- Suspicious powershell with MITRE mapping\nrule.mitre.id:*T1059* AND data.processname:powershell.exe\n\n-- Lateral movement (high severity)\nrule.level&gt;=12 AND (data.srcuser:* AND data.dstuser:*)\n-- Auth brute force\nrule.id:5710 OR rule.id:5712 OR rule.id:5716\n-- File deletion / ransomware\nlocation:syscheck AND (rule.level&gt;=12) AND file.path:/important.*/'));
+    return h;
+  };
+
+  function renderCheatSheet(platform) {
+    csBody.innerHTML = CHEATS[platform] ? CHEATS[platform]() : '';
+  }
+
+  function openCheatSheet() {
+    csOpen = true;
+    mainPage.classList.add('hidden');
+    csPage.classList.remove('hidden');
+    csLink.textContent = '← Back';
+    renderCheatSheet(csSelect.value);
+  }
+
+  function closeCheatSheet() {
+    csOpen = false;
+    csPage.classList.add('hidden');
+    mainPage.classList.remove('hidden');
+    csLink.textContent = 'Cheat Sheet';
+    render();  // refresh the main page
+  }
+
+  csSelect.addEventListener('change', function(){
+    renderCheatSheet(this.value);
+  });
+
+  csLink.addEventListener('click', function(e){
+    e.preventDefault();
+    if (csOpen) {
+      closeCheatSheet();
+    } else {
+      openCheatSheet();
+    }
+  });
+
 })();
 </script>
 
+<script>
+(function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  var p = location.protocol;
+  if (p === 'file:') return;
+  navigator.serviceWorker.register('./sw.js').catch(function(){});
+})();
+</script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 # SIEM Query Builder — User Manual
 
-> **Version 1.0** | Fully offline · No telemetry · No data leaves your machine
+> **Version 2.0** | Fully offline · No telemetry · No data leaves your machine
 
 ---
 
@@ -14,11 +14,13 @@
 6. [File Import (.txt / .csv)](#file-import-txt--csv)
 7. [IOC Types & Auto-Detect](#ioc-types--auto-detect)
 8. [SIEM Platforms & Query Syntax](#siem-platforms--query-syntax)
-9. [Copying Queries](#copying-queries)
-10. [Dark / Light Theme](#dark--light-theme)
-11. [Keyboard Shortcuts](#keyboard-shortcuts)
-12. [Tips & Best Practices](#tips--best-practices)
-13. [Troubleshooting](#troubleshooting)
+9. [Cheat Sheet](#cheat-sheet)
+10. [Copying Queries](#copying-queries)
+11. [Dark / Light Theme](#dark--light-theme)
+12. [PWA Support](#pwa-support)
+13. [Keyboard Shortcuts](#keyboard-shortcuts)
+14. [Tips & Best Practices](#tips--best-practices)
+15. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -34,7 +36,10 @@ The **SIEM Query Builder** is a browser-based tool that generates native SIEM qu
 - **File import** from `.txt` and `.csv` files
 - **Chunked combined queries** for efficient batch hunting
 - **Per-IOC validation** with color-coded feedback
-- **Dark / Light theme** — full black + green dark mode
+- **Built-in Cheat Sheet** — search query syntax reference for all 5 SIEM platforms
+- **Typewriter heading animation** — "SIEM Query Builder" types itself out on every visit
+- **Dark / Light theme** — full black + green dark mode (default)
+- **PWA support** — installable on desktop and mobile
 - **Zero dependencies** — single HTML file, works offline
 
 ---
@@ -51,6 +56,7 @@ The **SIEM Query Builder** is a browser-based tool that generates native SIEM qu
 python3 -m http.server 8080
 # Open http://localhost:8080 in your browser
 ```
+Serving via HTTP also enables the **PWA install** prompt and service worker caching.
 
 ### System Requirements
 - Any modern browser: Chrome 90+, Firefox 90+, Edge 90+, Safari 14+
@@ -61,24 +67,31 @@ python3 -m http.server 8080
 
 ## Interface Walkthrough
 
-The tool is organized into **4 steps**, displayed as cards from top to bottom:
+The tool is organized into **4 step cards** displayed vertically:
 
 ```
 ┌─────────────────────────────────────────┐
-│  Step 1 — Mode & IOC Type               │
+│  SIEM Query Builder    [Dark Mode] [Cheat Sheet]  │  ← Header (always visible)
+├─────────────────────────────────────────┤
+│  Select IOC Nature                      │
 │  [Single IOC] [Bulk IOCs (up to 50)]    │
 │  [Auto-Detect] [IP] [Email] [Domain]... │
 ├─────────────────────────────────────────┤
-│  Step 2 — SIEM Platform                 │
+│  Select SIEM Platform                    │
 │  [IBM QRadar] [Splunk] [RSA] ...        │
 ├─────────────────────────────────────────┤
-│  Step 3 — IOC Value                     │
+│  Add IOC Value                          │
 │  [Input field or textarea]              │
 ├─────────────────────────────────────────┤
-│  Step 4 — Generated Queries             │
+│  Generated Queries                      │
 │  [Query output with copy buttons]       │
 └─────────────────────────────────────────┘
 ```
+
+**Header features:**
+- **Heading** — "SIEM Query Builder" in Consolas font with a typewriter animation on every visit
+- **Dark Mode / Light Mode** — theme toggle button
+- **Cheat Sheet** — opens an in-page search query reference for all 5 SIEM platforms
 
 Queries regenerate **instantly** as you type, select options, or change settings — no "Generate" button needed.
 
@@ -89,10 +102,10 @@ Queries regenerate **instantly** as you type, select options, or change settings
 Best for quick one-off lookups during an investigation.
 
 ### Steps:
-1. **Select "Single IOC"** tab at the top of Step 1
+1. **Select "Single IOC"** tab at the top of Select IOC Nature
 2. **Choose IOC type** (or leave on Auto-Detect)
 3. **Pick SIEM platforms** — check one or more (e.g., QRadar + Splunk)
-4. **Enter the IOC** in the input field — the query appears in Step 4 instantly
+4. **Enter the IOC** in the input field — the query appears in Generated Queries instantly
 
 ### Example:
 | Input | Auto-Detected As | Output |
@@ -254,6 +267,34 @@ Queries use field-based syntax compatible with the Wazuh indexer. Includes:
 
 ---
 
+## Cheat Sheet
+
+The **Cheat Sheet** is an in-page search query reference covering all 5 SIEM platforms. It's accessible from the header via the **"Cheat Sheet"** button.
+
+### Opening the Cheat Sheet
+- Click **"Cheat Sheet"** in the header — the main tool cards hide and the cheat sheet appears in their place
+- The header (title + theme toggle + back button) remains visible
+- Click **"← Back"** (the same button toggles) to return to the main tool
+
+### Platform Selection
+A **dropdown** at the top of the cheat sheet lets you switch between platforms:
+- **IBM QRadar (AQL)** — SELECT syntax, tables, operators, string matching, functions, time, aggregation, grouping
+- **Splunk (SPL)** — search basics, time modifiers, pipe commands, stats/eval functions, subsearches
+- **RSA NetWitness** — native syntax, operators, attributes by category (IP/port/domain/email/file/user/process)
+- **Datadog SIEM** — faceted syntax, @attribute reference, service/source scoping
+- **Wazuh** — Lucene syntax, operators (incl. fuzzy, regex, proximity), rule-level filtering, location scoping
+
+### Content
+Each platform cheat sheet includes:
+- Query syntax basics and operators
+- Key field/attribute references for threat hunting
+- String matching, regex, and wildcard patterns
+- Time and date handling
+- Aggregation and statistical functions
+- Ready-to-use threat hunting query examples
+
+---
+
 ## Copying Queries
 
 ### Individual Copy
@@ -262,7 +303,7 @@ Queries use field-based syntax compatible with the Wazuh indexer. Includes:
 - The button briefly shows **"Copied!"** on success
 
 ### Copy All
-- Click the **"Copy All"** button in the Step 4 header
+- Click the **"Copy All"** button in the Generated Queries header
 - Copies all generated queries from all SIEMs at once
 - Queries are separated by blank lines for easy pasting
 
@@ -274,16 +315,35 @@ Queries use field-based syntax compatible with the Wazuh indexer. Includes:
 
 ## Dark / Light Theme
 
-The theme toggle button is in the top-right corner of the header.
+The theme toggle button is in the top-right area of the header.
 
 | Theme | Background | Accent | Best For |
 |-------|-----------|--------|----------|
+| **Dark** (default) | Pure black (`#000`) | Light green | Late-night hunting, reducing eye strain |
 | **Light** | White/gray | Blue | Daytime, well-lit environments |
-| **Dark** | Pure black (`#000`) | Light green | Late-night hunting, reducing eye strain |
 
 - Your preference is saved to **localStorage** and persists across sessions
-- If no preference is saved, the tool follows your **OS-level theme** setting
+- If no preference is saved, the tool defaults to **dark mode**
 - All colors, borders, shadows, and code blocks adapt to the selected theme
+
+---
+
+## PWA Support
+
+The tool can be installed as a Progressive Web App for a native-like experience.
+
+### Features:
+- **Installable** — "Add to Home Screen" / "Install app" prompt in supported browsers
+- **Standalone window** — no browser chrome, looks like a native desktop app
+- **Service worker** — caches the tool for reliable offline use (when served via HTTP)
+- **Custom icon** — "SIEM QB" branding in green-on-black
+
+### How to Install:
+1. Serve the tool via a local HTTP server (`python3 -m http.server 8080`)
+2. Open `http://localhost:8080` in Chrome or Edge
+3. Click the install icon in the address bar, or use the browser menu → "Install SIEM Query Builder"
+
+The tool still works perfectly without installation — just open `index.html` directly.
 
 ---
 
@@ -292,6 +352,7 @@ The theme toggle button is in the top-right corner of the header.
 | Shortcut | Action |
 |----------|--------|
 | `Ctrl + Enter` / `Cmd + Enter` | Copy all generated queries |
+| `Escape` | Close Cheat Sheet (legacy support) |
 | `Tab` / `Shift + Tab` | Navigate between form elements |
 
 ---
@@ -303,6 +364,11 @@ The theme toggle button is in the top-right corner of the header.
 - **Adjust chunk size** based on your SIEM's query limits — start with 10 and increase if your platform supports it
 - **Select only the SIEMs you need** — generating queries for all 5 when you only use Splunk creates unnecessary output
 
+### Cheat Sheet Usage
+- Keep the **Cheat Sheet** open in a separate tab/window for quick syntax reference while hunting
+- Switch between platform tabs to compare query syntax across SIEMs
+- Use the threat hunting examples as templates — copy, paste, and customize
+
 ### IOC Hygiene
 - **Deduplicate before pasting** — the tool doesn't deduplicate IOCs
 - **Validate manually** — auto-detection is pattern-based; a valid-looking IP could still be benign
@@ -312,7 +378,8 @@ The theme toggle button is in the top-right corner of the header.
 1. Start with **Auto-Detect** to understand what types of IOCs you have
 2. Switch to a **specific type** for validation and cleaner output
 3. Use **Chunked Combined Queries** for the actual hunt
-4. Copy individual queries when you need to tune or share a specific search
+4. Reference the **Cheat Sheet** for platform-specific query syntax
+5. Copy individual queries when you need to tune or share a specific search
 
 ### Security
 - The tool runs **entirely in your browser** — no IOC ever leaves your machine
@@ -333,6 +400,8 @@ The theme toggle button is in the top-right corner of the header.
 | **CSV import picks wrong column** | Reorder your CSV so the IOC column is first, or paste directly into the textarea |
 | **Dark mode not saving** | Check that localStorage is not blocked (some private/incognito modes restrict it) |
 | **Copy not working** | Older browsers may not support the Clipboard API — try `Ctrl+C` on the query text instead |
+| **Cheat Sheet not loading** | Ensure the HTML file is intact — the cheat sheet is built into the same file |
+| **PWA install not showing** | Must be served via HTTP — `python3 -m http.server 8080` then open `localhost:8080` |
 | **Page looks broken** | Clear browser cache, ensure JavaScript is enabled, use a modern browser |
 
 ---
@@ -341,10 +410,12 @@ The theme toggle button is in the top-right corner of the header.
 
 ```
 siem-query-builder/
-├── index.html      # The tool (open this in your browser)
-├── README.md       # Project overview and feature list
-├── USER_MANUAL.md  # This guide
-├── LICENSE         # MIT License
+├── index.html        # The tool (open this in your browser)
+├── manifest.json     # PWA manifest for installable app
+├── sw.js             # Service worker for offline caching
+├── README.md         # Project overview and feature list
+├── USER_MANUAL.md    # This guide
+├── LICENSE           # MIT License
 └── .gitignore
 ```
 
